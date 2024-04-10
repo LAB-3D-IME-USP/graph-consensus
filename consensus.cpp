@@ -1,6 +1,5 @@
 // TO-DO
 //  1 - Comentar o código
-//  2 - Ajustar o operador '=' na classe Node, (tá dando problema com a constante NUMBER)
 
 /*              Bibliotecas que serão usadas no código              */
 
@@ -174,6 +173,15 @@ class Graph{
                 printf("Erro, o grafo já atingiu a sua quantidade máxima de nós.");
             }   
         }
+
+        friend std::ostream& operator<<(std::ostream& os, const Graph& graph) {
+            os << "\nGraph nodes: {\n" << std::endl;
+            for (uint8_t i = 0; i < graph.current_nodes_number; i++) {
+                os << graph.nodes[i] << std::endl;
+            }
+            os << "}" << std::endl;
+            return os;
+        }
     
     private:
         uint8_t current_nodes_number;
@@ -226,8 +234,9 @@ void run_graph_tests(){
     for(uint8_t i = 0; i < 10; i++){
         Node n(i);
         G.set_node(n);
-        std::cout << G.nodes[i] << std::endl; // Imprime o objeto Node
     }
+
+    std::cout << G << std::endl;
 }
 
 /*              Código principal                */
