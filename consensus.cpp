@@ -11,6 +11,8 @@
 // Bibliotecas responsáveis pela entrada e saída.
 #include <stdio.h>
 #include <iostream>
+// Biblioteca responsável por fornecer os métodos de manipulação de string que serão usados nesse código.
+#include <string>
 
 /*              Structs que serão usadas no código              */
 
@@ -102,8 +104,35 @@ class Node{
             return false;
         }
 
+        // Sobrecarga do operador de inserção.
+        friend std::ostream& operator<<(std::ostream& os, const Node& node) {
+            os << "Node NUMBER: " << static_cast<int>(node.NUMBER) << std::endl; // Imprime o número do nó
+            os << "Node Color (R,G,B): " << static_cast<int>(node.color.R) << "," 
+                                        << static_cast<int>(node.color.G) << "," 
+                                        << static_cast<int>(node.color.B) << std::endl; // Imprime a cor do nó
+            os << "Node neighbors: " << node.get_neighbors_as_string() << std::endl;
+            return os;
+        }
+
+
     private:
         uint8_t neighbors_count;
+
+        // Comentar sobre essa função e sobre o porque de usar const nela.
+        std::string get_neighbors_as_string() const {
+            std::string neighbors = "[";
+            for(uint8_t i = 0; i < this->neighbors.size(); i++){
+                neighbors += std::to_string(this->neighbors[i]) + ", ";
+            }
+
+            // Remove o último espaço e a última vírgula
+            neighbors.pop_back();
+            neighbors.pop_back();
+
+            neighbors += "]";
+            
+            return neighbors;
+        }
 
 };
 
@@ -154,14 +183,6 @@ class Graph{
 
 /*              Funções que serão usadas para testar o código               */
 
-void show_vector(std::vector<uint8_t> v){
-    printf("[ ");
-    for(uint8_t i = 0; i < v.size(); i++){
-        printf("%d, ", v[i]);
-    }
-    printf("]\n\n");
-}
-
 void run_node_tests(){
     /*
         Essa função é responsável por rodar alguns testes básicos para objetos do tipo 'Node'.
@@ -182,11 +203,11 @@ void run_node_tests(){
     
     
     // Testa a inserção de vizinhos (método 'set_neighbor').
-    show_vector(n.neighbors);
+    std::cout << n << std::endl;
     for(uint8_t i = 1; i < 10; i++){
         n.set_neighbor(i);
     }
-    show_vector(n.neighbors);
+    std::cout << n << std::endl;
 
     // Testa o método 'is_neighbor'.
     printf("%d\n", n.is_neighbor(4)); // == 1.
@@ -205,6 +226,7 @@ void run_graph_tests(){
     for(uint8_t i = 0; i < 10; i++){
         Node n(i);
         G.set_node(n);
+        std::cout << G.nodes[i] << std::endl; // Imprime o objeto Node
     }
 }
 
