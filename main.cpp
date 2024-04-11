@@ -1,3 +1,13 @@
+// TO - DO
+
+// Talvez seja interessante adicionar métodos get a classe Graph, para evitar, por exemplo, que se troque a cor diretamente no atributo nodes[i] e não faça o mesmo
+// no atributo nodes_color[i].
+
+// Tomar cuidado na hora de setar cor no algoritmo de simulação, eu devo lembrar que apenas objetos do tipo 'Node' tem o atributo set_color, ou seja, 
+// quando eu for lidar com objetos do tipo CRGB, como é o caso dos objetos do array G.nodes_color (Para um Graph G), eu devo setar a cor manualmente, isto é,
+// G.nodes_color[i] = CRGB(r,g,b)
+
+
 // Biblioteca responsável por fornecer o tipo 'uint8_t'.
 #include <cstdint>
 // Biblioteca responsável por fornecer o tipo 'vector'.
@@ -10,16 +20,9 @@
 // Biblioteca responsável por fornecer os métodos necessários para controlar os leds.
 #include <FastLED.h>
 
+
 /*              Structs que serão usadas no código              */
-// Struct responsável por armazenar uma cor RGB.
-struct Color{
-    // Parâmetro Red (R) do RGB. 
-    uint8_t R;
-    // Parâmetro Green (G) do RGB. 
-    uint8_t G;
-    // Parâmetro Blue (B) do RGB. 
-    uint8_t B;
-};
+
 
 // Struct responsável por armazenar algumas constantes que serão necessárias no código.
 struct Configs{
@@ -28,26 +31,24 @@ struct Configs{
     // Constante responsável por setar o pino que enviará os dados para a placa.
     static const uint8_t LED_PIN;
     // Constante responsável por setar o valor de uma das cores que os leds podem assumir.
-    static const Color COLOR_1;
+    static const CRGB COLOR_1;
     // Constante responsável por setar o valor de uma das cores que os leds podem assumir.
-    static const Color COLOR_2;
+    static const CRGB COLOR_2;
     // Constante responsável por setar a "cor apagada" aos leds.
-    static const Color OFF;
+    static const CRGB OFF;
 };
 
 /*              Constantes que serão utilizadas no código               */
 // Inicializa os membros estáticos da struct Configs fora da definição da struct.
 const uint8_t Configs::NODES_NUMBER = 100;
 const uint8_t Configs::LED_PIN = 12;
-const Color Configs::COLOR_1 = {255, 0, 0};
-const Color Configs::COLOR_2 = {0, 255, 0};
-const Color Configs::OFF = {0, 0, 0};
+const CRGB Configs::COLOR_1 = CRGB(255, 0, 0);
+const CRGB Configs::COLOR_2 = CRGB(0, 255, 0);
+const CRGB Configs::OFF = CRGB(0, 0, 0);
 
-CRGB leds[Configs::NODES_NUMBER]; // Array para armazenar as cores dos LEDs
 
 /*        Declaração da assinatura das funções auxiliares       */
-void acendeImpares();
-void acendePares();
+
 
 /*              Classes que serão usadas no código              */
 class Node{
@@ -58,7 +59,7 @@ class Node{
         Atributos:
             public:
                 number (uint8_t): Número inteiro que representa o nó.
-                color (Color): Struct do tipo 'Color' que representa a cor atual que o nó possui.
+                color (CRGB): Struct do tipo 'CRGB' que representa a cor atual que o nó possui.
                 neighbors (vector<uint8_t>): Array de inteiros que indica quais são os vizinhos do nó, isto é, que indica quais nós estão 
                                              conectados a esse nó.
             private:
@@ -66,7 +67,7 @@ class Node{
 
         Métodos:
             public:
-                void set_color(Color color_to_set): Seta a cor 'c' no nó.
+                void set_color(CRGB color_to_set): Seta a cor 'c' no nó.
                 void set_neighbor(uint8_t neighbor_number): Adiciona um novo vizinho ao nó.
                 boolean is_neighbor(uint8_t neighbor_number): Verifica se um dado nó é vizinho.
 
@@ -81,7 +82,7 @@ class Node{
 
     public:
         uint8_t number;
-        Color color;
+        CRGB color;
         std::vector<uint8_t> neighbors;
 
         // Cria um construtor personalizado. Repare que, caso não seja passado nenhum parâmetro para o construtor da classe 'Node',
@@ -94,7 +95,7 @@ class Node{
         }
 
         // Método responsável por setar uma nova cor em objetos do tipo 'Node'.
-        void set_color(Color color_to_set){
+        void set_color(CRGB color_to_set){
             this->color = color_to_set;
         }
 
@@ -119,9 +120,9 @@ class Node{
             // Imprime o número do nó.
             os << "Node number: " << static_cast<int>(node.number) << std::endl; 
             // Imprime a cor RGB do nó.
-            os << "Node Color (R,G,B): " << static_cast<int>(node.color.R) << "," 
-                                        << static_cast<int>(node.color.G) << "," 
-                                        << static_cast<int>(node.color.B) << std::endl; 
+            os << "Node Color (R,G,B): " << static_cast<int>(node.color.r) << "," 
+                                        << static_cast<int>(node.color.g) << "," 
+                                        << static_cast<int>(node.color.b) << std::endl; 
             // Imprime os vizinhos do nó.
             os << "Node neighbors: " << node.get_neighbors_as_string() << std::endl;
 
@@ -151,7 +152,6 @@ class Node{
 
 };
 
-
 class Graph{
     /*
         Descrição:
@@ -179,14 +179,16 @@ class Graph{
 
         static const uint8_t NODES_NUMBER = Configs::NODES_NUMBER;
         Node nodes[NODES_NUMBER];
+        CRGB nodes_color[NODES_NUMBER];
 
         // Cria um construtor para a classe 'Graph'.
         Graph() : current_nodes_number(0){}
 
-        // Método responsável por adicionar um nó ao grafo.
+        // Método responsável por adicionar um nó ao grafo e também por adicionar a cor desse nó ao vetor que guarda as cores de todos os nós do grafo.
         void set_node(const Node& node){
             if(current_nodes_number < NODES_NUMBER){
                 this->nodes[current_nodes_number] = node;
+                nodes_color[current_nodes_number] = node.color;
                 current_nodes_number++;
             }else{
                 printf("Erro, o grafo já atingiu a sua quantidade máxima de nós.");
@@ -209,35 +211,24 @@ class Graph{
         uint8_t current_nodes_number;
 };
 
+
+/*        Variáveis globais usadas no código        */
+Graph G;
+
+
 /*        Setup da placa        */
 void setup() {
-  FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(leds, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
+  // Com base na configuração abaixo, sempre que usarmos 'FastLED.show()' as cores que estiverem em 'G.nodes_color' serão as cores que irão ser exibidas
+  // nos leds. Por conta disso, convencionaremos na hora de implementarmos a simulação que o array 'G.nodes' será o array que guardará o estado antigo dos
+  // leds, enquanto o array 'G.nodes_color' será o array que guardará o estado novo dos leds. Dito isso, É IMPORTANTE RESSALTAR QUE 'G_nodes_color' e 'G.nodes'
+  // são estruturas de dados diferentes, já que, 'G_nodes' é um array de objetos do tipo 'Node', enquanto 'G_nodes_color' é um array de objetos do tipo 'CRGB'.
+  // Contudo, como todo 'G_nodes[i]' possui o atributo color que é do tipo 'CRGB', podemos operar com os dois arrays citados como sendo os vetores de estado.
+  FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(G.nodes_color, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
 }
 
 void loop() {
-  acendePares();
-  delay(1000); // Espera um segundo
-  acendeImpares();
-  delay(1000); // Espera um segundo
+
 }
+
 
 /*        Funções auxiliares        */
-void acendePares() {
-  for(int i = 0; i < Configs::NODES_NUMBER; i += 2) { // Pula de dois em dois (LEDs pares considerando i começando de 0)
-    leds[i] = CRGB(Configs::COLOR_1.R, Configs::COLOR_1.G, Configs::COLOR_1.B); // Acende o LED de verde (pode alterar as cores conforme desejado)
-  }
-  for(int i = 1; i < Configs::NODES_NUMBER; i += 2) { // Apaga os LEDs ímpares
-    leds[i] = CRGB(Configs::OFF.R, Configs::OFF.G, Configs::OFF.B);
-  }
-  FastLED.show();
-}
-
-void acendeImpares() {
-  for(int i = 1; i < Configs::NODES_NUMBER; i += 2) { // Pula de dois em dois começando de 1 (LEDs ímpares)
-    leds[i] = CRGB(Configs::COLOR_2.R, Configs::COLOR_2.G, Configs::COLOR_2.B); // Acende o LED de vermelho (pode alterar as cores conforme desejado)
-  }
-  for(int i = 0; i < Configs::NODES_NUMBER; i += 2) { // Apaga os LEDs pares
-    leds[i] = CRGB(Configs::OFF.R, Configs::OFF.G, Configs::OFF.B);
-  }
-  FastLED.show();
-}
