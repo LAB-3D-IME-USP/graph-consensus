@@ -137,7 +137,7 @@ class Node{
         // Método responsável por gerar uma visualização de objetos do tipo 'Node'.
         friend std::ostream& operator<<(std::ostream& os, const Node& node) {
             // Imprime o número do nó.
-            os << "Node number: " << static_cast<int>(node.led_number) << std::endl; 
+            os << "Led Number: " << static_cast<int>(node.led_number) << std::endl; 
             // Imprime a cor RGB do nó.
             os << "Node Color (R,G,B): " << static_cast<int>(node.current_color.r) << "," 
                                         << static_cast<int>(node.current_color.g) << "," 
@@ -221,6 +221,7 @@ class Graph{
         friend std::ostream& operator<<(std::ostream& os, const Graph& graph) {
             os << "\nGraph nodes: {\n" << std::endl;
             for (uint8_t i = 0; i < graph.current_nodes_number; i++) {
+                os << "Vertex Number: " + std::to_string(i) << std::endl;
                 os << graph.nodes[i] << std::endl;
             }
             os << "}" << std::endl;
