@@ -1,8 +1,7 @@
 // TO - DO
+// Colocar as coisas setadas como (IMPORTANTE!) aqui.
 
-// Talvez seja interessante adicionar métodos get a classe Graph, para evitar, por exemplo, que se troque a cor diretamente no atributo nodes[i] e não faça o mesmo
-// no atributo nodes_color[i].
-
+//(IMPORTANTE!) (Revisar e ver se ainda funciona assim)
 // Tomar cuidado na hora de setar cor no algoritmo de simulação, eu devo lembrar que apenas objetos do tipo 'Node' tem o atributo set_color, ou seja, 
 // quando eu for lidar com objetos do tipo CRGB, como é o caso dos objetos do array G.nodes_color (Para um Graph G), eu devo setar a cor manualmente, isto é,
 // G.nodes_color[i] = CRGB(r,g,b)
@@ -102,9 +101,15 @@ class Node{
         // Repare que os atributos públicos led_number, current_color e next_color, além do atributo privado 'neighbors_count' são inicializados 
         // no array de inicialização do construtor da classe 'Node', enquanto o atributo público neighbors é inicializado dentro 
         // do construtor em questão.
-        Node(uint8_t node_number = 255) : led_number(node_number), current_color(Configs::OFF), next_color(Configs::OFF),neighbors_count(0){
-            //Setamos o nó como sendo o seu próprio (e primeiro) vizinho. (IMPORTANTE!)
+        Node(uint8_t number = 255) : led_number(number), current_color(Configs::OFF), next_color(Configs::OFF),neighbors_count(0){
+            //(IMPORTANTE!)
+            //Setamos o nó como sendo o seu próprio (e primeiro) vizinho. 
             neighbors.push_back(led_number);
+        }
+
+        // Método responsável por setar o atributo 'led_number'
+        void set_led_number(uint8_t number){
+            this->led_number = number;
         }
 
         // Método responsável por setar uma nova cor no atributo 'current_color' de um objeto do tipo 'Node'.
@@ -253,11 +258,9 @@ void setup() {
   // Modificar o grafo com base nos inputs (Estado inicial do grafo, isto é, os usuários já escolheram os vértices que eles irão colorir).
   // Mostrar o estado inicial do grafo.
   // delay
-
 }
 
 void loop() {
-
     // A ADICIONAR AQUI
     //simulate();
     //mostrar o estado atual do grafo.
@@ -266,6 +269,83 @@ void loop() {
 
 
 /*        Funções auxiliares        */
+
+void generateGraph(){
+    
+    // A estrutura de dados abaixo possui 'Configs::NODES_NUMBER' linhas pois cada linha i representa os vizinhos do
+    // vértice 1, e, como a constante 'Configs::NODES_NUMBER' guarda o número de vértices, consequentemente, ela será
+    // a responsável por setar o número de linhas na estrutura de dados abaixo. Além disso, a estrutura de dados abaixo
+    // é setada como tendo 9 colunas pois esse é o tamanho da maior das linhas. 
+    uint8_t ordered_pairs_connection[Configs::NODES_NUMBER][9] = {
+        {4, 26}, {2, 4}, {1, 3}, {2, 5, 6}, {0, 1, 5, 22, 28}, {3, 4, 6, 21, 23}, {3, 5, 21}, {8},
+        {7, 9, 10, 11, 21}, {8}, {8, 13, 14}, {8, 12, 16, 20, 22}, {11, 14, 15, 16}, {10, 99},
+        {10, 12, 15, 99}, {12, 14, 16, 17, 82}, {11, 12, 15, 17, 18}, {15, 16, 18, 81}, {16, 17, 27},
+        {20, 35}, {11, 19, 21, 23}, {5, 6, 8, 20, 22, 25}, {4, 11, 21, 23, 24}, {5, 20, 22, 29, 35},
+        {22, 26}, {21, 27}, {0, 24}, {18, 25}, {4, 30}, {23, 30, 31, 51}, {28, 29, 52}, {29, 32, 51},
+        {31, 46}, {35, 38, 52}, {36, 50, 51}, {19, 23, 33, 37, 47}, {34, 40, 44, 50}, {35, 38, 39},
+        {33, 37, 39, 40}, {37, 38, 42}, {36, 38, 41, 42, 43}, {40, 53, 73, 82}, {39, 40, 44}, {40, 44, 63},
+        {36, 42, 43, 45, 46, 47}, {44}, {32, 44}, {35, 44, 48}, {47, 51}, {50}, {34, 36, 49}, {29, 31, 34, 48},
+        {30, 33}, {41, 54, 56}, {53, 55, 62, 63}, {54, 58, 65}, {53, 57, 58, 61}, {56, 58, 59, 61, 66, 69},
+        {55, 56, 57, 59, 60, 66}, {57, 58, 69, 70}, {58, 65, 66, 67, 87}, {56, 57, 62, 67}, {54, 61, 63, 64, 65, 72},
+        {43, 54, 62, 64}, {62, 63, 73, 81}, {55, 60, 62, 67, 71, 72, 74}, {57, 58, 60, 67, 70}, {60, 61, 65, 66, 71, 74, 75},
+        {69, 74}, {57, 59, 68, 76, 77}, {59, 66, 71, 75, 77}, {65, 67, 70, 72, 78, 80, 86}, {62, 65, 71, 73, 80}, 
+        {41, 64, 72, 80, 81, 83}, {65, 67, 68, 78, 80, 87}, {67, 70, 76, 79}, {69, 75, 77, 78, 87, 89}, {69, 70, 76, 94},
+        {71, 74, 76, 79, 84, 86, 90}, {75, 78, 80, 85}, {71, 72, 73, 74, 79, 84, 85}, {17, 64, 73, 83}, {15, 41, 83, 92},
+        {73, 81, 82, 84, 92}, {78, 80, 83, 91, 93}, {79, 80, 90, 93, 96}, {71, 78, 87, 88, 93}, {60, 74, 76, 86, 88},
+        {86, 87, 89, 90}, {76, 88, 90}, {78, 85, 88, 89, 91, 93, 94, 96}, {84, 90, 92, 93}, {82, 83, 91, 99},
+        {84, 85, 86, 90, 91, 95, 97, 98, 99}, {77, 90, 95}, {93, 94, 96, 97}, {85, 90, 95}, {93, 95, 98},
+        {93, 97, 99}, {13, 14, 92, 93, 98}
+    };
+
+    // Itera sobre a estrutura de dados 'ordered_pairs_connection' e cria os 'Configs::NODES_NUMBER' nós do grafo. Perceba que, devido a
+    // natureza do construtor da classe 'Node' e, devido também ao fato de que não setaremos o atributo 'Node'.led_number agora, todos 
+    // os objetos do tipo 'Node' terão, nesse momento, o atributo 'Node'.led_number == 255 (que é o valor padrão desse atributo). Repare que 
+    // eu uso as dimensões da estrutura de dados em questão para iterar sobre ela.
+    for(uint8_t i = 0; i < Configs::NODES_NUMBER; i++){
+        uint8_t line_size = sizeof(ordered_pairs_connection)/sizeof(ordered_pairs_connection[i]); 
+        // Crio o nó que representa o vértice de número i.
+        Node node;
+        for(uint8_t j = 0; j < line_size; j++){
+            // Adiciono ao atributo 'Node'.neighbors do nó criado acima, todos os seus vizinhos.
+            node.set_neighbor(ordered_pairs_connection[i][j]);
+        }
+        // Adiciono ao grafo o nó criado, isto é, o nó que representa o vértice de número i.
+        G.set_node(node);
+    }
+
+    // A matriz abaixo possui 100 linhas pois cada linha representa um par (led,vértice) e o grafo que iremos usar 
+    // nesse código possui 100 vértices. Além disso, como cada linha representa um par (led, vértice), o número de
+    // colunas será igual à 2.
+    uint8_t led_vertex_relation[Configs::NODES_NUMBER][2] = {
+        {1, 30}, {2, 28}, {3, 0}, {4, 1}, {5, 2}, {6, 4}, {7, 26}, {8, 27}, {9, 29}, {10, 31}, {11, 52}, 
+        {12, 51}, {13, 33}, {14, 32}, {15, 24}, {16, 25}, {17, 5}, {18, 3}, {19, 6}, {20, 21}, {21, 22}, 
+        {22, 23}, {23, 34}, {24, 50}, {25, 49}, {26, 48}, {27, 36}, {28, 35}, {29, 20}, {30, 8}, {31, 7}, 
+        {32, 9}, {33, 11}, {34, 18}, {35, 19}, {36, 37}, {37, 38}, {38, 47}, {39, 46}, {40, 45}, {41, 44},
+        {42, 40}, {43, 39}, {44, 17}, {45, 16}, {46, 12}, {47, 10}, {48, 13}, {49, 14}, {50, 15}, {51, 41}, 
+        {52, 42}, {53, 43}, {54, 63}, {55, 81}, {56, 82}, {57, 99}, {58, 92}, {59, 83}, {60, 73}, {61, 64}, 
+        {62, 54}, {63, 53}, {64, 55}, {65, 62}, {66, 72}, {67, 80}, {68, 84}, {69, 91}, {70, 98}, {71, 97}, 
+        {72, 93}, {73, 85}, {74, 79}, {75, 71}, {76, 65}, {77, 61}, {78, 56}, {79, 60}, {80, 67}, {81, 74}, 
+        {82, 78}, {83, 86}, {84, 95}, {85, 96}, {86, 90}, {87, 87}, {88, 75}, {89, 68}, {90, 66}, {91, 58}, 
+        {92, 57}, {93, 59}, {94, 70}, {95, 76}, {96, 88}, {97, 94}, {98, 89}, {99, 77}, {100, 69}
+    };
+
+    // (IMPORTANTE!)
+    // Executar o teste abaixo.
+    //std::cout << G << std::endl;
+
+    // Itera sobre as sublistas da lista 'led_vertex_relation'.
+    for(uint8_t i = 0; i < Configs::NODES_NUMBER; i++){
+        // (IMPORTANTE!)
+        // Repare que o LED começa a contar do 1 e vai até o 100.
+
+        // Salvo em duas variáveis o par (número do led, número do vértice).
+        uint8_t led_number = led_vertex_relation[i][0];
+        uint8_t vertex_number = led_vertex_relation[i][1];
+
+        // Atribuo ao vértice 'vertex_number' o número do seu respectivo led na placa, isto é 'led_number'.
+        G.nodes[vertex_number].set_led_number(led_number);
+    }
+}
 
 void simulate(){
     /*
@@ -318,4 +398,11 @@ void simulate(){
             node.set_next_color(node.current_color);
         }
     }
+}
+
+int main(){
+    generateGraph();
+    std::cout << "Oi" << std::endl;
+
+    return 1;
 }
