@@ -19,7 +19,8 @@
 #include <string>
 // Biblioteca responsável por fornecer os métodos necessários para controlar os leds.
 #include <FastLED.h>
-
+// Biblioteca responsável por fornecer os métodos necessários para lidar com números pseudo-aleatórios.
+#include <random>
 
 /*              Structs que serão usadas no código              */
 
@@ -36,6 +37,12 @@ struct Configs{
     static const CRGB COLOR_2;
     // Constante responsável por setar a "cor apagada" aos leds.
     static const CRGB OFF;
+    // Constante responsável por setar a probabilidade de um led não mudar a sua cor em uma dada iteração da simulação do algoritmo de consenso.
+    // OBS: Usaremos a escala de 0 a 100 para evitar de usar a comparação entre números do tipo 'float' ou 'double'. Ou seja,
+    // SAME_COLOR_CHANCE = 55 representa uma probabilidade de 55% de um led não mudar a sua cor em uma dada iteração da simulação, por exemplo.
+    static const int SAME_COLOR_CHANCE;
+    // Constante responsável por setar a quantidade máxima de vértices que cada jogador poderá escolher.
+    static const uint8_t NUMBER_OF_VERTICES_TO_CHOOSE;
 };
 
 /*              Constantes que serão utilizadas no código               */
@@ -45,9 +52,11 @@ const uint8_t Configs::LED_PIN = 12;
 const CRGB Configs::COLOR_1 = CRGB(255, 0, 0);
 const CRGB Configs::COLOR_2 = CRGB(0, 255, 0);
 const CRGB Configs::OFF = CRGB(0, 0, 0);
-
+const int Configs::SAME_COLOR_CHANCE = 20;
+const uint8_t Configs::NUMBER_OF_VERTICES_TO_CHOOSE = 3;
 
 /*        Declaração da assinatura das funções auxiliares       */
+void simulate();
 
 
 /*              Classes que serão usadas no código              */
@@ -62,7 +71,8 @@ class Node{
                 current_color (CRGB): Struct do tipo 'CRGB' que representa a cor atual que o nó possui.
                 next_color (CRGB): Struct do tipo 'CRGB' que representa a próxima cor que o nó possuirá.
                 neighbors (vector<uint8_t>): Array de inteiros que indica quais são os vizinhos do nó, isto é, que indica quais nós estão 
-                                             conectados ao nó em questão.
+                                             conectados ao nó em questão. Para tal, esse array armazena os números dos vértices que representam
+                                             cada um dos vizinhos do nó em questão.
             private:
                 neighbors_count (uint8_t): Valor inteiro que representa a quantidade de vizinhos do nó.
 
@@ -235,11 +245,76 @@ void setup() {
   // são estruturas de dados diferentes, já que, 'G_nodes' é um array de objetos do tipo 'Node', enquanto 'G_nodes_color' é um array de objetos do tipo 'CRGB'.
   // Contudo, como todo 'G_nodes[i]' possui o atributo color que é do tipo 'CRGB', podemos operar com os dois arrays citados como sendo os vetores de estado.
   FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(G.nodes_color, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
+  
+  // A ADICIONAR AQUI
+  // Cria o grafo (Estado 0 do grafo, isto é, todos os leds estão apagados).
+  // Pedir os inputs do usuário. 
+  // Modificar o grafo com base nos inputs (Estado inicial do grafo, isto é, os usuários já escolheram os vértices que eles irão colorir).
+  // Mostrar o estado inicial do grafo.
+  // delay
+
 }
 
 void loop() {
 
+    // A ADICIONAR AQUI
+    //simulate();
+    //mostrar o estado atual do grafo.
+    //delay
 }
 
 
 /*        Funções auxiliares        */
+
+void simulate(){
+    /*
+        Description: 
+        Essa função é responsável por executar o algoritmo de consenso no grafo G (declarado globalmente). Dito isso, vale relembrar 
+        alguns pontos, primeiramente, é importante lembrar que cada posição 'i' de 'G.nodes' representa o vértice 'i' do grafo G. Por exemplo,
+        o objeto do tipo 'Node' que está na posição 1, representa o vértice 1 do grafo G. Vale dizer também que, o número do led associado a um 
+        dado 'G.nodes[i]' está guardado no atributo 'led_number' do objeto do tipo 'Node' em questão. Ou seja, para o objeto do tipo 'Node' 
+        que ocupa a posição 1 de 'G.nodes', o led que representa esse vértice será o led 'G.nodes[1].led_color'.
+    */    
+
+    // Cria um gerador de números aleatórios usando uma semente gerada pelo sistema.
+    std::mt19937 rng(std::random_device{}());
+
+    for(Node node: G.nodes){
+        // Cria uma distribuição uniforme que gera números inteiros entre 0 e 100. Tal distribuição será usada para gerar um número 
+        // pseudo-aleatórios entre 0 e 10
+        std::uniform_int_distribution<int> dist(0, 100);
+
+        // Gera um número pseudo-aleatório entre 0 e 10 usando a semente e a distribuição setadas logo acima.
+        int random_int = dist(rng);
+        
+        // Cria uma variável booleana que representa se a cor do nó em questão deverá ser alterada ou não, com base em SAME_COLOR_CHANCE.
+        bool change_color = random_int > Configs::SAME_COLOR_CHANCE; 
+
+        if(change_color){
+            // Se o fluxo de execução chegar até aqui, a cor do nó em questão deverá ser alterada.
+            if(node.neighbors.empty()){
+                // Se o fluxo de execução chegar até aqui, significa que o nó em questão não possui vizinhos. Logo, a sua cor não será alterada.
+                // Faz com que a próxima cor do nó em questão seja igual a sua cor atual.
+                node.set_next_color(node.current_color);
+            }else{
+                // Se o fluxo de execução chegar até aqui, significa que o nó em questão possui vizinhos. Logo, a sua cor será alterada. 
+                int neighbors_number = node.neighbors.size();
+                // Cria uma distribuição uniforme que gera números inteiros entre 0 e 'neighbors_number-1'. Tal distribuição será usada para 
+                // gerar um número pseudo-aleatórios entre 0 e 'neighbors_number-1'.
+                // PS: O fator de correção '-1' é usado pois estamos sorteando um índice de um array (0 <= array_index <= array.size() - 1).
+                std::uniform_int_distribution<int> dist(0, neighbors_number-1);
+                // Gera um número pseudo-aleatório entre 0 e 'neighbors_number-1'. Tal número indicará qual índice do array de vizinhos foi 
+                // sorteado, isto é, qual dos vizinhos foi sorteado.
+                int choosen_neighbor_index = dist(rng);
+                // Guarda em uma variável o número que representa o vértice do vizinho sorteado.
+                uint8_t choosen_neighbor = node.neighbors[choosen_neighbor_index];
+                // Faz com que a próxima cor do nó em questão seja igual a cor atual do seu vizinho sorteado.
+                node.set_next_color(G.nodes[choosen_neighbor].current_color);
+            }
+        }else{
+            // Se o fluxo de execução chegar até aqui, o nó em questão permanecerá com a sua cor inalterada.
+            // Faz com que a próxima cor do nó em questão seja igual a sua cor atual.
+            node.set_next_color(node.current_color);
+        }
+    }
+}
