@@ -114,8 +114,11 @@ void setChoosenVerticesNumber(){
     // Guarda na variável 'inserted_choices_number' uma eventual tecla digitada.
     char inserted_choices_number = myKeypad.getKey();
     // Enquanto uma tecla não for digitada, o código fica em loop.
-    while(inserted_choices_number == NO_KEY){
+    while(inserted_choices_number == NO_KEY || inserted_choices_number == 'A' || inserted_choices_number == 'B' 
+        || inserted_choices_number == 'C' || inserted_choices_number == 'D' || inserted_choices_number == '0' 
+        || inserted_choices_number == '#'|| inserted_choices_number == '*'){
         // Guarda na variável 'inserted_choices_number' uma eventual tecla digitada.
+        // Perceba que, como apenas 1 caractere é guardado, não se pode digitar um número maior do que 9.
         inserted_choices_number = myKeypad.getKey();
     }
 
