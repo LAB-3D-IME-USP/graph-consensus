@@ -155,7 +155,7 @@ void setChoosenVerticesNumber(){
     // Guarda em uma variável uma eventual tecla digitada pelo usuário.
     char key_pressed = myKeypad.getKey();
     // Enquanto uma tecla não for digitada pelo usuário, o código fica em loop.
-    while(key_pressed == NO_KEY){
+    while(key_pressed == NO_KEY || key_pressed == 'A' || key_pressed == 'B' || key_pressed == 'C' || key_pressed == '*' ||isDigit(key_pressed) ){
         // Verifica se uma tecla foi digitada pelo usuário.
         key_pressed = myKeypad.getKey();
     }
