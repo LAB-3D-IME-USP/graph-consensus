@@ -1,10 +1,8 @@
 //TO - DO AND ALERTS!
 // Trocar 'byte' por 'uint8_t'
 // Fazer as alterações necessárias para adaptar esse código ao código principal
-// NÃO DIFERENCIAR 07 DE 7 NA ESCOLHA DOS VÉRTICES (A conversão de String para inteiro resolve isso aparentemente)
 // Implementar o reset após o fim da simulação.
 // conferir comentários e o que deve ser setado como constante
-// salvar o código em uma nova branch do github
 
 // Biblioteca responsável por controlar o teclado matricial 4x4.
 #include <Keypad.h>
@@ -280,14 +278,18 @@ byte choice(char player_number){
 
             // Se a última tecla pressionada for diferente de 'D', a última tecla pressionada é adicionado a string "pressed_keys".
             }else {
-                // Adiciona a última tecla pressionada a string "pressed_keys".
-                pressed_keys += key_pressed;
-                // Atualiza a posição atual do display com base na quantidade de caracteres em "pressed_keys".
-                lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
-                // Imprime a string 'pressed_keys' no display LCD.
-                lcd.print(key_pressed); 
-                // Avança em uma coluna a posição atual do display.
-                col_cursor_current_position += 1;
+                // pressed_keys.length() < 2 é usado pois só podem ser digitados números entre 0 e 99, já que temos 100 vértices no grafo 
+                // em questão e esses vértices são numerados de 0 a 99.
+                if(isDigit(key_pressed) && pressed_keys.length() < 2){
+                    // Adiciona a última tecla pressionada a string "pressed_keys".
+                    pressed_keys += key_pressed;
+                    // Atualiza a posição atual do display com base na quantidade de caracteres em "pressed_keys".
+                    lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+                    // Imprime a string 'pressed_keys' no display LCD.
+                    lcd.print(key_pressed); 
+                    // Avança em uma coluna a posição atual do display.
+                    col_cursor_current_position += 1;
+                }
             }    
         }
         // Atualiza a última tecla pressionada.
