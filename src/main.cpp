@@ -1,16 +1,9 @@
-// TO - DO
-// Colocar as coisas setadas como (IMPORTANTE!) aqui.
-
-//(IMPORTANTE!) (Revisar e ver se ainda funciona assim)
+// Warning!
 // Tomar cuidado na hora de setar cor no algoritmo de simulação, eu devo lembrar que apenas objetos do tipo 'Node' tem o atributo set_color, ou seja, 
 // quando eu for lidar com objetos do tipo CRGB, como é o caso dos objetos do array G.nodes_color (Para um Graph G), eu devo setar a cor manualmente, isto é,
 // G.nodes_color[i] = CRGB(r,g,b)
 
-// Mudar o size_t para uint8_t ?
-// Remover a biblitoeca stdio.h ?
-
-// Mudar Color para CRGB
-
+/*              Bibliotecas que serão usadas no código              */
 // Biblioteca responsável por fornecer o tipo 'uint8_t'.
 #include <cstdint>
 // Biblioteca responsável por fornecer o tipo 'vector'.
@@ -20,14 +13,13 @@
 #include <iostream>
 // Biblioteca responsável por fornecer os métodos de manipulação de string que serão usados nesse código.
 #include <string>
-// Biblioteca responsável por fornecer os métodos necessários para controlar os leds.
-#include <FastLED.h>
 // Biblioteca responsável por fornecer os métodos necessários para lidar com números pseudo-aleatórios.
 #include <random>
+// Biblioteca responsável por fornecer os métodos necessários para controlar os leds.
+#include <FastLED.h>
+
 
 /*              Structs que serão usadas no código              */
-
-
 // Struct responsável por armazenar algumas constantes que serão necessárias no código.
 struct Configs{
     // Constante responsável por setar a quantidade de nós que um objeto do tipo 'Graph' terá.
@@ -48,6 +40,7 @@ struct Configs{
     static const uint8_t NUMBER_OF_VERTICES_TO_CHOOSE;
 };
 
+
 /*              Constantes que serão utilizadas no código               */
 // Inicializa os membros estáticos da struct Configs fora da definição da struct.
 const uint8_t Configs::NODES_NUMBER = 100;
@@ -58,9 +51,11 @@ const CRGB Configs::OFF = CRGB(0, 0, 0);
 const int Configs::SAME_COLOR_CHANCE = 20;
 const uint8_t Configs::NUMBER_OF_VERTICES_TO_CHOOSE = 3;
 
+
 /*        Declaração da assinatura das funções auxiliares       */
 void generateGraph();
 void simulate();
+
 
 /*              Classes que serão usadas no código              */
 class Node{
@@ -105,11 +100,7 @@ class Node{
         // Repare que os atributos públicos led_number, current_color e next_color, além do atributo privado 'neighbors_count' são inicializados 
         // no array de inicialização do construtor da classe 'Node', enquanto o atributo público neighbors é inicializado dentro 
         // do construtor em questão.
-        Node(uint8_t number = 255) : led_number(number), current_color(Configs::OFF), next_color(Configs::OFF),neighbors_count(0){
-            //(IMPORTANTE!)
-            //Setamos o nó como sendo o seu próprio (e primeiro) vizinho. 
-            neighbors.push_back(led_number);
-        }
+        Node(uint8_t number = 255) : led_number(number), current_color(Configs::OFF), next_color(Configs::OFF),neighbors_count(0){}
 
         // Método responsável por setar o atributo 'led_number'
         void set_led_number(uint8_t number){
@@ -139,7 +130,6 @@ class Node{
                     return true;
                 }
             }
-
             return false;
         }
 
@@ -156,8 +146,6 @@ class Node{
 
             return os;
         }
-
-
     private:
         uint8_t neighbors_count;
 
@@ -237,7 +225,6 @@ class Graph{
             
             return os;
         }
-    
     private:
         uint8_t current_nodes_number;
 };
@@ -256,19 +243,25 @@ void setup() {
   // Contudo, como todo 'G_nodes[i]' possui o atributo color que é do tipo 'CRGB', podemos operar com os dois arrays citados como sendo os vetores de estado.
   FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(G.nodes_color, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
   
-  // A ADICIONAR AQUI
-  // Cria o grafo (Estado 0 do grafo, isto é, todos os leds estão apagados).
-  // Pedir os inputs do usuário. 
-  // Modificar o grafo com base nos inputs (Estado inicial do grafo, isto é, os usuários já escolheram os vértices que eles irão colorir).
-  // Mostrar o estado inicial do grafo.
-  // delay
+  generateGraph();
 }
 
 void loop() {
-    // A ADICIONAR AQUI
-    //simulate();
-    //mostrar o estado atual do grafo.
-    //delay
+    /*
+        Roda uma vez no loop {
+            // Pedir os inputs do usuário. 
+            // Modificar o grafo com base nos inputs (Estado inicial do grafo, isto é, os usuários já escolheram os vértices que eles irão colorir).
+            // Mostrar o estado inicial do grafo (Leds) (incluindo as alterações na cor feita pelos usuários).
+            // delay
+        }
+    */
+    /*
+        Loop {
+            // Simulate();
+            // Mostrar o estado atual do grafo.
+            // Delay
+        }
+    */
 }
 
 
@@ -438,10 +431,10 @@ void simulate(){
 
     for(Node node: G.nodes){
         // Cria uma distribuição uniforme que gera números inteiros entre 0 e 100. Tal distribuição será usada para gerar um número 
-        // pseudo-aleatórios entre 0 e 10
+        // pseudo-aleatórios entre 0 e 100
         std::uniform_int_distribution<int> dist(0, 100);
 
-        // Gera um número pseudo-aleatório entre 0 e 10 usando a semente e a distribuição setadas logo acima.
+        // Gera um número pseudo-aleatório entre 0 e 100 usando a semente e a distribuição setadas logo acima.
         int random_int = dist(rng);
         
         // Cria uma variável booleana que representa se a cor do nó em questão deverá ser alterada ou não, com base em SAME_COLOR_CHANCE.
@@ -474,11 +467,4 @@ void simulate(){
             node.set_next_color(node.current_color);
         }
     }
-}
-
-int main(){
-    generateGraph();
-    std::cout << "Oi" << std::endl;
-
-    return 1;
 }
