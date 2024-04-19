@@ -1,18 +1,14 @@
-//TO - DO AND ALERTS!
-// Trocar 'byte' por 'uint8_t'
-// Fazer as alterações necessárias para adaptar esse código ao código principal
-// Implementar o reset após o fim da simulação.
-// conferir comentários e o que deve ser setado como constante
-
 // Biblioteca responsável por controlar o teclado matricial 4x4.
 #include <Keypad.h>
 // Biblioteca responsável por controlar o display LCD 16x2.
 #include <Adafruit_LiquidCrystal.h>
 
+
 // [DECLARAÇÃO DE FUNÇÕES AUXILIARES]
 byte choice(char);
 void setChoosenVerticesNumber();
 void setColorVertices(); // Essa função precisa ser completada no código principal
+
 
 // [CONSTANTES!]
 // Define o número de linhas do teclado matricial. [Configs::]
@@ -24,6 +20,7 @@ byte keypad_row_pins[keypad_num_rows] = {9,8,7,6}; // Linhas 0 a 3.
 // Define os pinos em que estarão conectados as colunas do teclado matricial. [Configs::]
 byte keypad_col_pins[keypad_num_cols]= {5,4,3,2}; // Colunas 0 a 3.
 
+
 // [VARIÁVEIS GLOBAIS!]
 // Variável global que armazena a posição atual da linha do cursor do display LCD.
 byte row_cursor_current_position = 0;
@@ -31,13 +28,15 @@ byte row_cursor_current_position = 0;
 byte col_cursor_current_position = 0;
 // Variável global que armazenará a quantidade de vértices que cada jogador irá escolher na simulação atual.
 // PS: ESSA VARIÁVEL DEVERÁ SER LIMITADA POR 1 E POR UM VALOR DEFINIDO EM [Configs::]
-int choices_number = 2;
+int choices_number;
 // Variável global que indicará se a simulação já foi iniciada ou não.
 bool vertices_number_per_player_has_choosen = false; //TROCAR O NOME DESSA VARIÁVEL E CRIAR OUTRA VARIÁVEL DE CONTROLE
 // Variável global que indicará se o usuário já escolheu o número de vértices que cada jogador irá poder escolher.
 bool change_choosen_vertices_number = false;
 // Variável global que indicará se a simulação já começou.
 bool in_simulation = false;
+// Variável global que indicará se a simulação precisa ser resetada.
+bool reset = false;
 // Cria um mapa de teclas que define o que aparecerá ao se pressionar cada uma das teclas. No caso em questão, o mapa de teclas
 // foi criado representando as teclas exatamente como elas aparecem no teclado.
 char keymap[keypad_num_rows][keypad_num_cols]= 
@@ -92,9 +91,7 @@ void loop()
         // AQUI DEVERÁ SER RODADA A SIMULAÇÃO! [ TO-DO ]
         Serial.println("AQUI DEVERÁ SER RODADA A SIMULAÇÃO!");
         delay(2000);
-    }
-    //
-    
+    } 
 }
 
 void setChoosenVerticesNumber(){
