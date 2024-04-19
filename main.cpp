@@ -1,7 +1,6 @@
 // TO - DO
-// Colocar as coisas setadas como (IMPORTANTE!) aqui.
+// Olhar as coisas setadas como (IMPORTANTE!) no código, e corrigi-lás, se necessário.
 
-//(IMPORTANTE!) (Revisar e ver se ainda funciona assim)
 // Tomar cuidado na hora de setar cor no algoritmo de simulação, eu devo lembrar que apenas objetos do tipo 'Node' tem o atributo set_color, ou seja, 
 // quando eu for lidar com objetos do tipo CRGB, como é o caso dos objetos do array G.nodes_color (Para um Graph G), eu devo setar a cor manualmente, isto é,
 // G.nodes_color[i] = CRGB(r,g,b)
@@ -58,7 +57,6 @@ const uint8_t Configs::NUMBER_OF_VERTICES_TO_CHOOSE = 3;
 
 /*        Declaração da assinatura das funções auxiliares       */
 void generateGraph();
-void userInteraction();
 void simulate();
 
 
@@ -245,26 +243,26 @@ Graph G;
 
 /*        Setup da placa        */
 void setup() {
-  // Com base na configuração abaixo, sempre que usarmos 'FastLED.show()' as cores que estiverem em 'G.nodes_color' serão as cores que irão ser exibidas
-  // nos leds. Por conta disso, convencionaremos na hora de implementarmos a simulação que o array 'G.nodes' será o array que guardará o estado antigo dos
-  // leds, enquanto o array 'G.nodes_color' será o array que guardará o estado novo dos leds. Dito isso, É IMPORTANTE RESSALTAR QUE 'G_nodes_color' e 'G.nodes'
-  // são estruturas de dados diferentes, já que, 'G_nodes' é um array de objetos do tipo 'Node', enquanto 'G_nodes_color' é um array de objetos do tipo 'CRGB'.
-  // Contudo, como todo 'G_nodes[i]' possui o atributo color que é do tipo 'CRGB', podemos operar com os dois arrays citados como sendo os vetores de estado.
-  //FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(G.nodes_color, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
-  
-  // A ADICIONAR AQUI
-  // Cria o grafo (Estado 0 do grafo, isto é, todos os leds estão apagados).
-  // Pedir os inputs do usuário. 
-  // Modificar o grafo com base nos inputs (Estado inicial do grafo, isto é, os usuários já escolheram os vértices que eles irão colorir).
-  // Mostrar o estado inicial do grafo.
-  // delay
+
+    // Com base na configuração abaixo, sempre que usarmos 'FastLED.show()' as cores que estiverem em 'G.nodes_color' serão as cores que irão ser exibidas
+    // nos leds. Por conta disso, convencionaremos na hora de implementarmos a simulação que o array 'G.nodes' será o array que guardará o estado antigo dos
+    // leds, enquanto o array 'G.nodes_color' será o array que guardará o estado novo dos leds. Dito isso, É IMPORTANTE RESSALTAR QUE 'G_nodes_color' e 'G.nodes'
+    // são estruturas de dados diferentes, já que, 'G_nodes' é um array de objetos do tipo 'Node', enquanto 'G_nodes_color' é um array de objetos do tipo 'CRGB'.
+    // Contudo, como todo 'G_nodes[i]' possui o atributo color que é do tipo 'CRGB', podemos operar com os dois arrays citados como sendo os vetores de estado.
+    //FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(G.nodes_color, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
+
+    // graphGenerator();
+
 }
 
 void loop() {
-    // A ADICIONAR AQUI
-    //simulate();
-    //mostrar o estado atual do grafo.
-    //delay
+
+    // Pedir os inputs do usuário. 
+    // Modificar o grafo com base nos inputs (Estado inicial do grafo, isto é, os usuários já escolheram os vértices que eles irão colorir).
+    // Mostrar o estado inicial do grafo (Leds) (incluindo as alterações feitas pelos usuários).
+    // Simulate();
+    // Mostrar o estado atual do grafo (Leds).
+    // delay
 }
 
 /*        Funções auxiliares        */
@@ -387,24 +385,6 @@ void generateGraph(){
         G.set_node(node);
     }
 
-    // Itera sobre a estrutura de dados 'ordered_pairs_connection' e cria os 'Configs::NODES_NUMBER' nós do grafo. Perceba que, devido a
-    // natureza do construtor da classe 'Node' e, devido também ao fato de que não setaremos o atributo 'Node'.led_number agora, todos 
-    // os objetos do tipo 'Node' terão, nesse momento, o atributo 'Node'.led_number == 255 (que é o valor padrão desse atributo). Repare que 
-    // eu uso as dimensões da estrutura de dados em questão para iterar sobre ela.
-    /*for(uint8_t i = 0; i < Configs::NODES_NUMBER; i++){
-        uint8_t* neighbors = ordered_pairs_connection[i];
-
-        uint8_t line_size = sizeof(ordered_pairs_connection)/sizeof(ordered_pairs_connection[i]); 
-        // Crio o nó que representa o vértice de número i.
-        Node node;
-        for(uint8_t j = 0; j < line_size; j++){
-            // Adiciono ao atributo 'Node'.neighbors do nó criado acima, todos os seus vizinhos.
-            node.set_neighbor(ordered_pairs_connection[i][j]);
-        }
-        // Adiciono ao grafo o nó criado, isto é, o nó que representa o vértice de número i.
-        G.set_node(node);
-    }*/
-
     // A matriz abaixo possui 100 linhas pois cada linha representa um par (led,vértice) e o grafo que iremos usar 
     // nesse código possui 100 vértices. Além disso, como cada linha representa um par (led, vértice), o número de
     // colunas será igual à 2.
@@ -421,10 +401,6 @@ void generateGraph(){
         {92, 57}, {93, 59}, {94, 70}, {95, 76}, {96, 88}, {97, 94}, {98, 89}, {99, 77}, {100, 69}
     };
 
-    // (IMPORTANTE!)
-    // Executar o teste abaixo.
-    //std::cout << G << std::endl;
-
     // Itera sobre as sublistas da lista 'led_vertex_relation'.
     for(uint8_t i = 0; i < Configs::NODES_NUMBER; i++){
         // (IMPORTANTE!)
@@ -439,10 +415,6 @@ void generateGraph(){
     }
 
     std::cout << G << std::endl;
-}
-
-void userInteraction(){
-    
 }
 
 void simulate(){
@@ -463,7 +435,7 @@ void simulate(){
         // pseudo-aleatórios entre 0 e 10
         std::uniform_int_distribution<int> dist(0, 100);
 
-        // Gera um número pseudo-aleatório entre 0 e 10 usando a semente e a distribuição setadas logo acima.
+        // Gera um número pseudo-aleatório entre 0 e 100 usando a semente e a distribuição setadas logo acima.
         int random_int = dist(rng);
         
         // Cria uma variável booleana que representa se a cor do nó em questão deverá ser alterada ou não, com base em SAME_COLOR_CHANCE.
@@ -498,8 +470,10 @@ void simulate(){
     }
 }
 
+// A função main abaixo é usada apenas para chamar os testes
 int main(){
-    generateGraph();
+    
+    //generateGraph();
 
     return 1;
 }
