@@ -6,6 +6,10 @@
 // quando eu for lidar com objetos do tipo CRGB, como é o caso dos objetos do array G.nodes_color (Para um Graph G), eu devo setar a cor manualmente, isto é,
 // G.nodes_color[i] = CRGB(r,g,b)
 
+// Mudar o size_t para uint8_t ?
+// Remover a biblitoeca stdio.h ?
+
+// Mudar Color para CRGB
 
 // Biblioteca responsável por fornecer o tipo 'uint8_t'.
 #include <cstdint>
@@ -55,8 +59,8 @@ const int Configs::SAME_COLOR_CHANCE = 20;
 const uint8_t Configs::NUMBER_OF_VERTICES_TO_CHOOSE = 3;
 
 /*        Declaração da assinatura das funções auxiliares       */
+void generateGraph();
 void simulate();
-
 
 /*              Classes que serão usadas no código              */
 class Node{
@@ -269,47 +273,121 @@ void loop() {
 
 
 /*        Funções auxiliares        */
-
 void generateGraph(){
     
     // A estrutura de dados abaixo possui 'Configs::NODES_NUMBER' linhas pois cada linha i representa os vizinhos do
     // vértice 1, e, como a constante 'Configs::NODES_NUMBER' guarda o número de vértices, consequentemente, ela será
     // a responsável por setar o número de linhas na estrutura de dados abaixo. Além disso, a estrutura de dados abaixo
     // é setada como tendo 9 colunas pois esse é o tamanho da maior das linhas. 
-    uint8_t ordered_pairs_connection[Configs::NODES_NUMBER][9] = {
-        {4, 26}, {2, 4}, {1, 3}, {2, 5, 6}, {0, 1, 5, 22, 28}, {3, 4, 6, 21, 23}, {3, 5, 21}, {8},
-        {7, 9, 10, 11, 21}, {8}, {8, 13, 14}, {8, 12, 16, 20, 22}, {11, 14, 15, 16}, {10, 99},
-        {10, 12, 15, 99}, {12, 14, 16, 17, 82}, {11, 12, 15, 17, 18}, {15, 16, 18, 81}, {16, 17, 27},
-        {20, 35}, {11, 19, 21, 23}, {5, 6, 8, 20, 22, 25}, {4, 11, 21, 23, 24}, {5, 20, 22, 29, 35},
-        {22, 26}, {21, 27}, {0, 24}, {18, 25}, {4, 30}, {23, 30, 31, 51}, {28, 29, 52}, {29, 32, 51},
-        {31, 46}, {35, 38, 52}, {36, 50, 51}, {19, 23, 33, 37, 47}, {34, 40, 44, 50}, {35, 38, 39},
-        {33, 37, 39, 40}, {37, 38, 42}, {36, 38, 41, 42, 43}, {40, 53, 73, 82}, {39, 40, 44}, {40, 44, 63},
-        {36, 42, 43, 45, 46, 47}, {44}, {32, 44}, {35, 44, 48}, {47, 51}, {50}, {34, 36, 49}, {29, 31, 34, 48},
-        {30, 33}, {41, 54, 56}, {53, 55, 62, 63}, {54, 58, 65}, {53, 57, 58, 61}, {56, 58, 59, 61, 66, 69},
-        {55, 56, 57, 59, 60, 66}, {57, 58, 69, 70}, {58, 65, 66, 67, 87}, {56, 57, 62, 67}, {54, 61, 63, 64, 65, 72},
-        {43, 54, 62, 64}, {62, 63, 73, 81}, {55, 60, 62, 67, 71, 72, 74}, {57, 58, 60, 67, 70}, {60, 61, 65, 66, 71, 74, 75},
-        {69, 74}, {57, 59, 68, 76, 77}, {59, 66, 71, 75, 77}, {65, 67, 70, 72, 78, 80, 86}, {62, 65, 71, 73, 80}, 
-        {41, 64, 72, 80, 81, 83}, {65, 67, 68, 78, 80, 87}, {67, 70, 76, 79}, {69, 75, 77, 78, 87, 89}, {69, 70, 76, 94},
-        {71, 74, 76, 79, 84, 86, 90}, {75, 78, 80, 85}, {71, 72, 73, 74, 79, 84, 85}, {17, 64, 73, 83}, {15, 41, 83, 92},
-        {73, 81, 82, 84, 92}, {78, 80, 83, 91, 93}, {79, 80, 90, 93, 96}, {71, 78, 87, 88, 93}, {60, 74, 76, 86, 88},
-        {86, 87, 89, 90}, {76, 88, 90}, {78, 85, 88, 89, 91, 93, 94, 96}, {84, 90, 92, 93}, {82, 83, 91, 99},
-        {84, 85, 86, 90, 91, 95, 97, 98, 99}, {77, 90, 95}, {93, 94, 96, 97}, {85, 90, 95}, {93, 95, 98},
-        {93, 97, 99}, {13, 14, 92, 93, 98}
-    };
 
-    // Itera sobre a estrutura de dados 'ordered_pairs_connection' e cria os 'Configs::NODES_NUMBER' nós do grafo. Perceba que, devido a
-    // natureza do construtor da classe 'Node' e, devido também ao fato de que não setaremos o atributo 'Node'.led_number agora, todos 
-    // os objetos do tipo 'Node' terão, nesse momento, o atributo 'Node'.led_number == 255 (que é o valor padrão desse atributo). Repare que 
-    // eu uso as dimensões da estrutura de dados em questão para iterar sobre ela.
-    for(uint8_t i = 0; i < Configs::NODES_NUMBER; i++){
-        uint8_t line_size = sizeof(ordered_pairs_connection)/sizeof(ordered_pairs_connection[i]); 
-        // Crio o nó que representa o vértice de número i.
+    std::vector<std::vector<uint8_t>> ordered_pairs_connection;
+
+    ordered_pairs_connection.push_back({4, 26}); //Vizinhos do vértice 0
+    ordered_pairs_connection.push_back({2, 4}); //Vizinhos do vértice 1
+    ordered_pairs_connection.push_back({1, 3}); //Vizinhos do vértice 2
+    ordered_pairs_connection.push_back({2, 5, 6}); //Vizinhos do vértice 3
+    ordered_pairs_connection.push_back({0, 1, 5, 22, 28}); //Vizinhos do vértice 4
+    ordered_pairs_connection.push_back({3, 4, 6, 21, 23}); //Vizinhos do vértice 5
+    ordered_pairs_connection.push_back({3, 5, 21}); //Vizinhos do vértice 6
+    ordered_pairs_connection.push_back({8}); //Vizinhos do vértice 7
+    ordered_pairs_connection.push_back({7, 9, 10, 11, 21}); //Vizinhos do vértice 8
+    ordered_pairs_connection.push_back({8}); //Vizinhos do vértice 9
+    ordered_pairs_connection.push_back({8, 13, 14}); //Vizinhos do vértice 10
+    ordered_pairs_connection.push_back({8, 12, 16, 20, 22}); //Vizinhos do vértice 11
+    ordered_pairs_connection.push_back({11, 14, 15, 16}); //Vizinhos do vértice 12
+    ordered_pairs_connection.push_back({10, 99}); //Vizinhos do vértice 13
+    ordered_pairs_connection.push_back({10, 12, 15, 99}); //Vizinhos do vértice 14
+    ordered_pairs_connection.push_back({12, 14, 16, 17, 82}); //Vizinhos do vértice 15
+    ordered_pairs_connection.push_back({11, 12, 15, 17, 18}); //Vizinhos do vértice 16
+    ordered_pairs_connection.push_back({15, 16, 18, 81}); //Vizinhos do vértice 17
+    ordered_pairs_connection.push_back({16, 17, 27}); //Vizinhos do vértice 18
+    ordered_pairs_connection.push_back({20, 35}); //Vizinhos do vértice 19
+    ordered_pairs_connection.push_back({11, 19, 21, 23}); //Vizinhos do vértice 20
+    ordered_pairs_connection.push_back({5, 6, 8, 20, 22, 25}); //Vizinhos do vértice 21
+    ordered_pairs_connection.push_back({4, 11, 21, 23, 24}); //Vizinhos do vértice 22
+    ordered_pairs_connection.push_back({5, 20, 22, 29, 35}); //Vizinhos do vértice 23
+    ordered_pairs_connection.push_back({22, 26}); //Vizinhos do vértice 24
+    ordered_pairs_connection.push_back({21, 27}); //Vizinhos do vértice 25
+    ordered_pairs_connection.push_back({0, 24}); //Vizinhos do vértice 26
+    ordered_pairs_connection.push_back({18, 25}); //Vizinhos do vértice 27
+    ordered_pairs_connection.push_back({4, 30}); //Vizinhos do vértice 28
+    ordered_pairs_connection.push_back({23, 30, 31, 51}); //Vizinhos do vértice 29
+    ordered_pairs_connection.push_back({28, 29, 52}); //Vizinhos do vértice 30
+    ordered_pairs_connection.push_back({29, 32, 51}); //Vizinhos do vértice 31
+    ordered_pairs_connection.push_back({31, 46}); //Vizinhos do vértice 32
+    ordered_pairs_connection.push_back({35, 38, 52}); //Vizinhos do vértice 33
+    ordered_pairs_connection.push_back({36, 50, 51}); //Vizinhos do vértice 34
+    ordered_pairs_connection.push_back({19, 23, 33, 37, 47}); //Vizinhos do vértice 35
+    ordered_pairs_connection.push_back({34, 40, 44, 50}); //Vizinhos do vértice 36
+    ordered_pairs_connection.push_back({35, 38, 39}); //Vizinhos do vértice 37
+    ordered_pairs_connection.push_back({33, 37, 39, 40}); //Vizinhos do vértice 38
+    ordered_pairs_connection.push_back({37, 38, 42}); //Vizinhos do vértice 39
+    ordered_pairs_connection.push_back({36, 38, 41, 42, 43}); //Vizinhos do vértice 40
+    ordered_pairs_connection.push_back({40, 53, 73, 82}); //Vizinhos do vértice 41
+    ordered_pairs_connection.push_back({39, 40, 44}); //Vizinhos do vértice 42
+    ordered_pairs_connection.push_back({40, 44, 63}); //Vizinhos do vértice 43
+    ordered_pairs_connection.push_back({36, 42, 43, 45, 46, 47}); //Vizinhos do vértice 44
+    ordered_pairs_connection.push_back({44}); //Vizinhos do vértice 45
+    ordered_pairs_connection.push_back({32, 44}); //Vizinhos do vértice 46
+    ordered_pairs_connection.push_back({35, 44, 48}); //Vizinhos do vértice 47
+    ordered_pairs_connection.push_back({47, 51}); //Vizinhos do vértice 48
+    ordered_pairs_connection.push_back({50}); //Vizinhos do vértice 49
+    ordered_pairs_connection.push_back({34, 36, 49}); //Vizinhos do vértice 50
+    ordered_pairs_connection.push_back({29, 31, 34, 48}); //Vizinhos do vértice 51
+    ordered_pairs_connection.push_back({30, 33}); //Vizinhos do vértice 52
+    ordered_pairs_connection.push_back({41, 54, 56}); //Vizinhos do vértice 53
+    ordered_pairs_connection.push_back({53, 55, 62, 63}); //Vizinhos do vértice 54
+    ordered_pairs_connection.push_back({54, 58, 65}); //Vizinhos do vértice 55
+    ordered_pairs_connection.push_back({53, 57, 58, 61}); //Vizinhos do vértice 56
+    ordered_pairs_connection.push_back({56, 58, 59, 61, 66, 69}); //Vizinhos do vértice 57
+    ordered_pairs_connection.push_back({55, 56, 57, 59, 60, 66}); //Vizinhos do vértice 58
+    ordered_pairs_connection.push_back({57, 58, 69, 70}); //Vizinhos do vértice 59
+    ordered_pairs_connection.push_back({58, 65, 66, 67, 87}); //Vizinhos do vértice 60
+    ordered_pairs_connection.push_back({56, 57, 62, 67}); //Vizinhos do vértice 61
+    ordered_pairs_connection.push_back({54, 61, 63, 64, 65, 72}); //Vizinhos do vértice 62
+    ordered_pairs_connection.push_back({43, 54, 62, 64}); //Vizinhos do vértice 63
+    ordered_pairs_connection.push_back({62, 63, 73, 81}); //Vizinhos do vértice 64
+    ordered_pairs_connection.push_back({55, 60, 62, 67, 71, 72, 74}); //Vizinhos do vértice 65
+    ordered_pairs_connection.push_back({57, 58, 60, 67, 70}); //Vizinhos do vértice 66
+    ordered_pairs_connection.push_back({60, 61, 65, 66, 71, 74, 75}); //Vizinhos do vértice 67
+    ordered_pairs_connection.push_back({69, 74}); //Vizinhos do vértice 68
+    ordered_pairs_connection.push_back({57, 59, 68, 76, 77}); //Vizinhos do vértice 69
+    ordered_pairs_connection.push_back({59, 66, 71, 75, 77}); //Vizinhos do vértice 70
+    ordered_pairs_connection.push_back({65, 67, 70, 72, 78, 80, 86}); //Vizinhos do vértice 71
+    ordered_pairs_connection.push_back({62, 65, 71, 73, 80}); //Vizinhos do vértice 72
+    ordered_pairs_connection.push_back({41, 64, 72, 80, 81, 83}); //Vizinhos do vértice 73
+    ordered_pairs_connection.push_back({65, 67, 68, 78, 80, 87}); //Vizinhos do vértice 74
+    ordered_pairs_connection.push_back({67, 70, 76, 79}); //Vizinhos do vértice 75
+    ordered_pairs_connection.push_back({69, 75, 77, 78, 87, 89}); //Vizinhos do vértice 76
+    ordered_pairs_connection.push_back({69, 70, 76, 94}); //Vizinhos do vértice 77
+    ordered_pairs_connection.push_back({71, 74, 76, 79, 84, 86, 90}); //Vizinhos do vértice 78
+    ordered_pairs_connection.push_back({75, 78, 80, 85}); //Vizinhos do vértice 79
+    ordered_pairs_connection.push_back({71, 72, 73, 74, 79, 84, 85}); //Vizinhos do vértice 80
+    ordered_pairs_connection.push_back({17, 64, 73, 83}); //Vizinhos do vértice 81
+    ordered_pairs_connection.push_back({15, 41, 83, 92}); //Vizinhos do vértice 82
+    ordered_pairs_connection.push_back({73, 81, 82, 84, 92}); //Vizinhos do vértice 83
+    ordered_pairs_connection.push_back({78, 80, 83, 91, 93}); //Vizinhos do vértice 84
+    ordered_pairs_connection.push_back({79, 80, 90, 93, 96}); //Vizinhos do vértice 85
+    ordered_pairs_connection.push_back({71, 78, 87, 88, 93}); //Vizinhos do vértice 86
+    ordered_pairs_connection.push_back({60, 74, 76, 86, 88}); //Vizinhos do vértice 87
+    ordered_pairs_connection.push_back({86, 87, 89, 90}); //Vizinhos do vértice 88
+    ordered_pairs_connection.push_back({76, 88, 90}); //Vizinhos do vértice 89
+    ordered_pairs_connection.push_back({78, 85, 88, 89, 91, 93, 94, 96}); //Vizinhos do vértice 90
+    ordered_pairs_connection.push_back({84, 90, 92, 93}); //Vizinhos do vértice 91
+    ordered_pairs_connection.push_back({82, 83, 91, 99}); //Vizinhos do vértice 92
+    ordered_pairs_connection.push_back({84, 85, 86, 90, 91, 95, 97, 98, 99}); //Vizinhos do vértice 93
+    ordered_pairs_connection.push_back({77, 90, 95}); //Vizinhos do vértice 94
+    ordered_pairs_connection.push_back({93, 94, 96, 97}); //Vizinhos do vértice 95
+    ordered_pairs_connection.push_back({85, 90, 95}); //Vizinhos do vértice 96
+    ordered_pairs_connection.push_back({93, 95, 98}); //Vizinhos do vértice 97
+    ordered_pairs_connection.push_back({93, 97, 99}); //Vizinhos do vértice 98
+    ordered_pairs_connection.push_back({13, 14, 92, 93, 98}); //Vizinhos do vértice 99
+
+    for (size_t i = 0; i < ordered_pairs_connection.size(); i++) {
         Node node;
-        for(uint8_t j = 0; j < line_size; j++){
-            // Adiciono ao atributo 'Node'.neighbors do nó criado acima, todos os seus vizinhos.
+        for (size_t j = 0; j < ordered_pairs_connection[i].size(); j++) {
             node.set_neighbor(ordered_pairs_connection[i][j]);
         }
-        // Adiciono ao grafo o nó criado, isto é, o nó que representa o vértice de número i.
         G.set_node(node);
     }
 
@@ -329,10 +407,6 @@ void generateGraph(){
         {92, 57}, {93, 59}, {94, 70}, {95, 76}, {96, 88}, {97, 94}, {98, 89}, {99, 77}, {100, 69}
     };
 
-    // (IMPORTANTE!)
-    // Executar o teste abaixo.
-    //std::cout << G << std::endl;
-
     // Itera sobre as sublistas da lista 'led_vertex_relation'.
     for(uint8_t i = 0; i < Configs::NODES_NUMBER; i++){
         // (IMPORTANTE!)
@@ -345,6 +419,8 @@ void generateGraph(){
         // Atribuo ao vértice 'vertex_number' o número do seu respectivo led na placa, isto é 'led_number'.
         G.nodes[vertex_number].set_led_number(led_number);
     }
+
+    std::cout << G << std::endl;
 }
 
 void simulate(){
