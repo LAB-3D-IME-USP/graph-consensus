@@ -17,15 +17,22 @@
 #include <random>
 // Biblioteca responsável por fornecer os métodos necessários para controlar os leds.
 #include <FastLED.h>
+//
+#include <chrono>
 
+
+// Biblioteca responsável por controlar o teclado matricial 4x4.
+//#include <Keypad.h>
+// Biblioteca responsável por controlar o display LCD 16x2.
+//#include <Adafruit_LiquidCrystal.h>
 
 /*              Structs que serão usadas no código              */
 // Struct responsável por armazenar algumas constantes que serão necessárias no código.
 struct Configs{
     // Constante responsável por setar a quantidade de nós que um objeto do tipo 'Graph' terá.
-    static const uint8_t NODES_NUMBER; // Perceba que, essa constante também setará, por consequência, o número de leds.
+    static const int NODES_NUMBER; // Perceba que, essa constante também setará, por consequência, o número de leds.
     // Constante responsável por setar o pino que enviará os dados para a placa.
-    static const uint8_t LED_PIN;
+    static const int LED_PIN;
     // Constante responsável por setar o valor de uma das cores que os leds podem assumir.
     static const CRGB COLOR_1;
     // Constante responsável por setar o valor de uma das cores que os leds podem assumir.
@@ -37,19 +44,19 @@ struct Configs{
     // SAME_COLOR_CHANCE = 55 representa uma probabilidade de 55% de um led não mudar a sua cor em uma dada iteração da simulação, por exemplo.
     static const int SAME_COLOR_CHANCE;
     // Constante responsável por setar a quantidade máxima de vértices que cada jogador poderá escolher.
-    static const uint8_t NUMBER_OF_VERTICES_TO_CHOOSE;
+    static const int NUMBER_OF_VERTICES_TO_CHOOSE;
 };
 
 
 /*              Constantes que serão utilizadas no código               */
 // Inicializa os membros estáticos da struct Configs fora da definição da struct.
-const uint8_t Configs::NODES_NUMBER = 100;
-const uint8_t Configs::LED_PIN = 12;
+const int Configs::NODES_NUMBER = 100;
+const int Configs::LED_PIN = 12;
 const CRGB Configs::COLOR_1 = CRGB(255, 0, 0);
 const CRGB Configs::COLOR_2 = CRGB(0, 255, 0);
-const CRGB Configs::OFF = CRGB(0, 0, 0);
-const int Configs::SAME_COLOR_CHANCE = 20;
-const uint8_t Configs::NUMBER_OF_VERTICES_TO_CHOOSE = 3;
+const CRGB Configs::OFF = CRGB::Black;
+const int Configs::SAME_COLOR_CHANCE = 0;
+const int Configs::NUMBER_OF_VERTICES_TO_CHOOSE = 3; //USAR ESSE PARÂMETRO PARA LIMITAR AS ESCOLHAS
 
 
 /*        Declaração da assinatura das funções auxiliares       */
@@ -90,20 +97,20 @@ class Node{
     */
 
     public:
-        uint8_t led_number;
+        int led_number;
         CRGB current_color;
         CRGB next_color;
-        std::vector<uint8_t> neighbors;
+        std::vector<int> neighbors;
 
         // Cria um construtor personalizado. Repare que, caso não seja passado nenhum parâmetro para o construtor da classe 'Node',
         // o construtor padrão criará um objeto do tipo 'Node' que possui o atributo 'number' == 255.
         // Repare que os atributos públicos led_number, current_color e next_color, além do atributo privado 'neighbors_count' são inicializados 
         // no array de inicialização do construtor da classe 'Node', enquanto o atributo público neighbors é inicializado dentro 
         // do construtor em questão.
-        Node(uint8_t number = 255) : led_number(number), current_color(Configs::OFF), next_color(Configs::OFF),neighbors_count(0){}
+        Node(int number = 255) : led_number(number), current_color(Configs::OFF), next_color(Configs::OFF),neighbors_count(0){}
 
         // Método responsável por setar o atributo 'led_number'
-        void set_led_number(uint8_t number){
+        void set_led_number(int number){
             this->led_number = number;
         }
 
@@ -118,14 +125,14 @@ class Node{
         }
 
         // Método responsável por setar um novo vizinho a um objeto do tipo 'Node'.
-        void set_neighbor(uint8_t neighbor_number){
+        void set_neighbor(int neighbor_number){
             this->neighbors.push_back(neighbor_number);
             this->neighbors_count ++;
         }
 
         // Método responsável por checar se um dado nó é vizinho do nó em questão.
-        bool is_neighbor(uint8_t neighbor_number){
-            for(uint8_t i = 0; i < this->neighbors.size(); i++){
+        bool is_neighbor(int neighbor_number){
+            for(int i = 0; i < this->neighbors.size(); i++){
                 if(this->neighbors[i] == neighbor_number){
                     return true;
                 }
@@ -146,14 +153,31 @@ class Node{
 
             return os;
         }
+
+        // Função para imprimir informações do nó via comunicação serial
+        void serialPrintNode() {
+            Serial.print("Led Number: ");
+            Serial.println(led_number);
+            
+            Serial.print("Node Current Color (R,G,B): ");
+            Serial.printf("R:%d, G:%d, B:%d\n", (current_color.r),(current_color.g),(current_color.b));
+            Serial.print("Node Next Color (R,G,B): ");
+            Serial.printf("R:%d, G:%d, B:%d\n", (next_color.r),(next_color.g),(next_color.b));
+            
+            // Suponha que get_neighbors_as_string() seja uma função membro de Node
+            // que retorna uma string com os vizinhos
+            Serial.print("Node neighbors: ");
+            Serial.println(get_neighbors_as_string().c_str());
+        }
+    
     private:
-        uint8_t neighbors_count;
+        int neighbors_count;
 
         // Repare que a função abaixo é setada como 'const', isso quer dizer que essa função não modificará o estado do objeto em que ela é chamada.
         // Método responsável por retornar uma string que contém uma representação que exibe os atributos de um objeto do tipo 'Node'.
         std::string get_neighbors_as_string() const {
             std::string neighbors_representation = "[";
-            for(uint8_t i = 0; i < this->neighbors.size(); i++){
+            for(int i = 0; i < this->neighbors.size(); i++){
                 neighbors_representation += std::to_string(this->neighbors[i]) + ", ";
             }
 
@@ -194,7 +218,7 @@ class Graph{
 
     public:
 
-        static const uint8_t NODES_NUMBER = Configs::NODES_NUMBER;
+        static const int NODES_NUMBER = Configs::NODES_NUMBER;
         Node nodes[NODES_NUMBER];
         CRGB nodes_color[NODES_NUMBER];
 
@@ -217,7 +241,7 @@ class Graph{
         // Perceba que o método abaixo utiliza a visualização gerada para objetos do tipo 'Node'.
         friend std::ostream& operator<<(std::ostream& os, const Graph& graph) {
             os << "\nGraph nodes: {\n" << std::endl;
-            for (uint8_t i = 0; i < graph.current_nodes_number; i++) {
+            for (int i = 0; i < graph.current_nodes_number; i++) {
                 os << "Vertex Number: " + std::to_string(i) << std::endl;
                 os << graph.nodes[i] << std::endl;
             }
@@ -225,28 +249,92 @@ class Graph{
             
             return os;
         }
+
+        void printSerialGraph(){
+            for(int i = 0; i < Configs::NODES_NUMBER; i++){
+                Serial.printf("%d: \n", i);
+                this->nodes[i].serialPrintNode();
+                delay(100);
+            }
+        }
+
+        void printSerialNodesColor(){
+            std::string result = "\n[";
+            for(int i = 0; i < Configs::NODES_NUMBER; i++){
+                result += i + "=> " "(R:" + std::to_string(nodes_color[i].r) + ", G:" + std::to_string(this->nodes_color[i].g) + ", B:" + std::to_string(this->nodes_color[i].b) + "),";
+            }
+            result.pop_back(); //Remove a última vírgula.
+            result += "]\n";
+
+            Serial.print(result.c_str());
+        }
+
     private:
-        uint8_t current_nodes_number;
+        int current_nodes_number;
 };
 
 
 /*        Variáveis globais usadas no código        */
 Graph G;
 
+int i = 0; //Variável de teste
 
 /*        Setup da placa        */
 void setup() {
-  // Com base na configuração abaixo, sempre que usarmos 'FastLED.show()' as cores que estiverem em 'G.nodes_color' serão as cores que irão ser exibidas
-  // nos leds. Por conta disso, convencionaremos na hora de implementarmos a simulação que o array 'G.nodes' será o array que guardará o estado antigo dos
-  // leds, enquanto o array 'G.nodes_color' será o array que guardará o estado novo dos leds. Dito isso, É IMPORTANTE RESSALTAR QUE 'G_nodes_color' e 'G.nodes'
-  // são estruturas de dados diferentes, já que, 'G_nodes' é um array de objetos do tipo 'Node', enquanto 'G_nodes_color' é um array de objetos do tipo 'CRGB'.
-  // Contudo, como todo 'G_nodes[i]' possui o atributo color que é do tipo 'CRGB', podemos operar com os dois arrays citados como sendo os vetores de estado.
-  FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(G.nodes_color, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
-  
-  generateGraph();
+    Serial.begin(9600);
+
+    // Gera o grafo
+    generateGraph();
+    
+    // Seto as cores para aparecer no led quando o usuário as seleciona
+    // Primeiro eu seto a cor do vértice e depois eu seto a cor do led que se refere ao vértice em questão.
+    // Escolha 1
+    G.nodes[19].set_current_color(CRGB::Green); // Altero a cor do vértice 19
+    G.nodes_color[G.nodes[19].led_number] = CRGB::Green; //Seto no led referente ao vértice 19 a cor do vértice 19
+    G.nodes[57].set_current_color(CRGB::Purple); // Altero a cor do vértice 57
+    G.nodes_color[G.nodes[57].led_number] = CRGB::Purple; //Seto no led referente ao vértice 57 a cor do vértice 57
+    // Escolha 2
+    G.nodes[7].set_current_color(CRGB::Green);  // Altero a cor do vértice 7
+    G.nodes_color[G.nodes[7].led_number] = CRGB::Green; //Seto no led referente ao vértice 7 a cor do vértice 7
+    G.nodes[25].set_current_color(CRGB::Purple); // Altero a cor do vértice 25
+    G.nodes_color[G.nodes[25].led_number] = CRGB::Purple; //Seto no led referente ao vértice 25 a cor do vértice 25
+    // Escolha 3
+    G.nodes[95].set_current_color(CRGB::Green); //Altero a cor do vértice 1
+    G.nodes_color[G.nodes[95].led_number] = CRGB::Green; //Seto no led referente ao vértice 1 a cor do vértice 1 
+    G.nodes[73].set_current_color(CRGB::Purple); // Altero a cor do vértice 0
+    G.nodes_color[G.nodes[73].led_number] = CRGB::Purple; //Seto no led referente ao vértice 0 a cor do vértice 0
+    
+    // Com base na configuração abaixo, sempre que usarmos 'FastLED.show()' as cores que estiverem em 'G.nodes_color' serão as cores que irão ser exibidas
+    // nos leds. Por conta disso, convencionaremos na hora de implementarmos a simulação que o array 'G.nodes' será o array que guardará o estado antigo dos
+    // leds, enquanto o array 'G.nodes_color' será o array que guardará o estado novo dos leds. Dito isso, É IMPORTANTE RESSALTAR QUE 'G_nodes_color' e 'G.nodes'
+    // são estruturas de dados diferentes, já que, 'G_nodes' é um array de objetos do tipo 'Node', enquanto 'G_nodes_color' é um array de objetos do tipo 'CRGB'.
+    // Contudo, como todo 'G_nodes[i]' possui o atributo color que é do tipo 'CRGB', podemos operar com os dois arrays citados como sendo os vetores de estado.
+    FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(G.nodes_color, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
+    
+   
+    // Exibe o estado inicial do grafo
+    FastLED.show();
+    delay(5000);
 }
 
 void loop() {
+    delay(100);
+    simulate();
+    FastLED.show();
+    /*
+    if(i > 100000){
+        delay(10000);
+        Serial.print("___________________________________________________________________\n");
+        G.printSerialGraph();
+        delay(5000);
+        Serial.print("___________________________________________________________________\n");
+    }else{
+        simulate();
+        if(i%10000 == 0) Serial.printf("%d\n", i);
+        i += 1;
+    }*/
+
+    
     /*
         Roda uma vez no loop {
             // Pedir os inputs do usuário. 
@@ -273,7 +361,7 @@ void generateGraph(){
     // a responsável por setar o número de linhas na estrutura de dados abaixo. Além disso, a estrutura de dados abaixo
     // é setada como tendo 9 colunas pois esse é o tamanho da maior das linhas. 
 
-    std::vector<std::vector<uint8_t>> ordered_pairs_connection;
+    std::vector<std::vector<int>> ordered_pairs_connection;
 
     ordered_pairs_connection.push_back({4, 26}); //Vizinhos do vértice 0
     ordered_pairs_connection.push_back({2, 4}); //Vizinhos do vértice 1
@@ -376,9 +464,9 @@ void generateGraph(){
     ordered_pairs_connection.push_back({93, 97, 99}); //Vizinhos do vértice 98
     ordered_pairs_connection.push_back({13, 14, 92, 93, 98}); //Vizinhos do vértice 99
 
-    for (size_t i = 0; i < ordered_pairs_connection.size(); i++) {
+    for (int i = 0; i < ordered_pairs_connection.size(); i++) {
         Node node;
-        for (size_t j = 0; j < ordered_pairs_connection[i].size(); j++) {
+        for (int j = 0; j < ordered_pairs_connection[i].size(); j++) {
             node.set_neighbor(ordered_pairs_connection[i][j]);
         }
         G.set_node(node);
@@ -387,7 +475,7 @@ void generateGraph(){
     // A matriz abaixo possui 100 linhas pois cada linha representa um par (led,vértice) e o grafo que iremos usar 
     // nesse código possui 100 vértices. Além disso, como cada linha representa um par (led, vértice), o número de
     // colunas será igual à 2.
-    uint8_t led_vertex_relation[Configs::NODES_NUMBER][2] = {
+    int led_vertex_relation[Configs::NODES_NUMBER][2] = {
         {1, 30}, {2, 28}, {3, 0}, {4, 1}, {5, 2}, {6, 4}, {7, 26}, {8, 27}, {9, 29}, {10, 31}, {11, 52}, 
         {12, 51}, {13, 33}, {14, 32}, {15, 24}, {16, 25}, {17, 5}, {18, 3}, {19, 6}, {20, 21}, {21, 22}, 
         {22, 23}, {23, 34}, {24, 50}, {25, 49}, {26, 48}, {27, 36}, {28, 35}, {29, 20}, {30, 8}, {31, 7}, 
@@ -401,19 +489,24 @@ void generateGraph(){
     };
 
     // Itera sobre as sublistas da lista 'led_vertex_relation'.
-    for(uint8_t i = 0; i < Configs::NODES_NUMBER; i++){
+    for(int i = 0; i < Configs::NODES_NUMBER; i++){
         // (IMPORTANTE!)
         // Repare que o LED começa a contar do 1 e vai até o 100.
 
         // Salvo em duas variáveis o par (número do led, número do vértice).
-        uint8_t led_number = led_vertex_relation[i][0];
-        uint8_t vertex_number = led_vertex_relation[i][1];
+        int led_number = led_vertex_relation[i][0] - 1;
+        int vertex_number = led_vertex_relation[i][1];
 
         // Atribuo ao vértice 'vertex_number' o número do seu respectivo led na placa, isto é 'led_number'.
         G.nodes[vertex_number].set_led_number(led_number);
     }
+}
 
-    std::cout << G << std::endl;
+bool hasColor(CRGB& color){
+    if(color.r == Configs::OFF.r && color.g == Configs::OFF.g && color.b == Configs::OFF.b){
+        return false;
+    }
+    return true;
 }
 
 void simulate(){
@@ -426,23 +519,29 @@ void simulate(){
         que ocupa a posição 1 de 'G.nodes', o led que representa esse vértice será o led 'G.nodes[1].led_color'.
     */    
 
-    // Cria um gerador de números aleatórios usando uma semente gerada pelo sistema.
-    std::mt19937 rng(std::random_device{}());
+    //
+    auto seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-    for(Node node: G.nodes){
+    // Cria um gerador de números aleatórios usando uma semente gerada pelo sistema.
+    std::mt19937 rng(seed);
+
+    for(Node& node: G.nodes){
+        //Serial.printf("led_number %d\n", node.led_number);
+        //Serial.printf("=> %d\n", node.led_number);
         // Cria uma distribuição uniforme que gera números inteiros entre 0 e 100. Tal distribuição será usada para gerar um número 
         // pseudo-aleatórios entre 0 e 100
         std::uniform_int_distribution<int> dist(0, 100);
 
         // Gera um número pseudo-aleatório entre 0 e 100 usando a semente e a distribuição setadas logo acima.
         int random_int = dist(rng);
-        
+        //Serial.printf("random_int: %d\n\n", random_int);
         // Cria uma variável booleana que representa se a cor do nó em questão deverá ser alterada ou não, com base em SAME_COLOR_CHANCE.
-        bool change_color = random_int > Configs::SAME_COLOR_CHANCE; 
+        bool change_color = random_int >= Configs::SAME_COLOR_CHANCE; 
 
         if(change_color){
             // Se o fluxo de execução chegar até aqui, a cor do nó em questão deverá ser alterada.
             if(node.neighbors.empty()){
+                //Serial.printf("neighbors: %d\n", node.led_number);
                 // Se o fluxo de execução chegar até aqui, significa que o nó em questão não possui vizinhos. Logo, a sua cor não será alterada.
                 // Faz com que a próxima cor do nó em questão seja igual a sua cor atual.
                 node.set_next_color(node.current_color);
@@ -455,16 +554,33 @@ void simulate(){
                 std::uniform_int_distribution<int> dist(0, neighbors_number-1);
                 // Gera um número pseudo-aleatório entre 0 e 'neighbors_number-1'. Tal número indicará qual índice do array de vizinhos foi 
                 // sorteado, isto é, qual dos vizinhos foi sorteado.
-                int choosen_neighbor_index = dist(rng);
+                int random_number = dist(rng);
+                int choosen_neighbor_index = random_number;
                 // Guarda em uma variável o número que representa o vértice do vizinho sorteado.
-                uint8_t choosen_neighbor = node.neighbors[choosen_neighbor_index];
+                int choosen_neighbor = node.neighbors[choosen_neighbor_index];
                 // Faz com que a próxima cor do nó em questão seja igual a cor atual do seu vizinho sorteado.
-                node.set_next_color(G.nodes[choosen_neighbor].current_color);
+                if(hasColor(G.nodes[choosen_neighbor].current_color)) node.set_next_color(G.nodes[choosen_neighbor].current_color);
+                else node.set_next_color(node.current_color);
             }
         }else{
+            //Serial.printf("change_color: %d\n", node.led_number);
             // Se o fluxo de execução chegar até aqui, o nó em questão permanecerá com a sua cor inalterada.
             // Faz com que a próxima cor do nó em questão seja igual a sua cor atual.
             node.set_next_color(node.current_color);
         }
+    }
+   
+    for(int i = 0; i < Configs::NODES_NUMBER; i++){
+        int led_number = G.nodes[i].led_number; //Ok!
+        //std::cout << led_number << std::endl; //Ok!
+        //Color current_color = G.nodes[i].current_color; //Ok!
+        //std::cout << "R: " << current_color.R << " G: " << current_color.G << " B: " << current_color.B << std::endl; //Ok!
+        CRGB next_color = G.nodes[i].next_color; //Ok!
+        //std::cout << "R: " << next_color.R << " G: " << next_color.G << " B: " << next_color.B << std::endl; //Ok!
+
+        G.nodes_color[led_number] = next_color;
+        //std::cout << "R: " << G.nodes_color[led_number].R << " G: " << G.nodes_color[led_number].G << " B: " << G.nodes_color[led_number].B << std::endl;
+        G.nodes[i].current_color = G.nodes[i].next_color;
+        //std::cout << "R: " << G.nodes[i].current_color.R << " G: " << G.nodes[i].current_color.G << " B: " << G.nodes[i].current_color.B << std::endl;
     }
 }
