@@ -70,7 +70,7 @@ const int Configs::LED_PIN = 12;
 const CRGB Configs::COLOR_1 = CRGB::Green;
 const CRGB Configs::COLOR_2 = CRGB::Purple;
 const CRGB Configs::OFF = CRGB::Black;
-const int Configs::SAME_COLOR_CHANCE = 0;
+const int Configs::SAME_COLOR_CHANCE = 50;
 const int Configs::NUMBER_OF_VERTICES_TO_CHOOSE = 3;
 const uint8_t Configs::ROWS = 4;
 const uint8_t Configs::COLS = 4;
@@ -96,7 +96,8 @@ void generateGraph();
 void simulate();
 uint8_t choice(char);
 void setChoosenVerticesNumber();
-void setColorVertices(); // Essa função precisa ser completada no código principal 
+void setColorVertices(); 
+void updatePlayersVertexCount();
 // Colocar a função hasColor e outras funções que existirem aqui
 // Alterar a ordem das funções aqui e na definição delas no fim do código (por na ordem em que elas são executadas)
 
@@ -342,57 +343,11 @@ bool in_simulation = false;
 // Variável global que indicará se a simulação precisa ser resetada.
 bool reset = false;
 
-/*        Setup da placa        */
+// Variável global que guardará o número de vértices que o player 1 (COLOR_1) conquistou.
+int player_1_current_vertex_count = 0;
 
-void setup() {
-    // Inicia a comunicação serial com uma taxa de transmissão de 9600 bits por segundo.
-    Serial.begin(9600);
-    //Configs iniciais do display
-    lcd.init(); //Inicializa a comunicação com o display já conectado
-    lcd.clear(); //Limpa a tela do display
-    lcd.backlight(); //Aciona a luz de fundo do display
-    lcd.print("Press # to start");
-
-    // Gera o grafo
-    generateGraph();
-
-    // Com base na configuração abaixo, sempre que usarmos 'FastLED.show()' as cores que estiverem em 'G.nodes_color' serão as cores que irão ser exibidas
-    // nos leds. Por conta disso, convencionaremos na hora de implementarmos a simulação que o array 'G.nodes' será o array que guardará o estado antigo dos
-    // leds, enquanto o array 'G.nodes_color' será o array que guardará o estado novo dos leds. Dito isso, É IMPORTANTE RESSALTAR QUE 'G_nodes_color' e 'G.nodes'
-    // são estruturas de dados diferentes, já que, 'G_nodes' é um array de objetos do tipo 'Node', enquanto 'G_nodes_color' é um array de objetos do tipo 'CRGB'.
-    // Contudo, como todo 'G_nodes[i]' possui o atributo color que é do tipo 'CRGB', podemos operar com os dois arrays citados como sendo os vetores de estado.
-    FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(G.nodes_color, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
-    
-   
-    // Exibe o estado inicial do grafo
-    FastLED.show();
-    delay(5000);
-}
-
-void loop() {
-    
-    // Cria uma variável que guardará uma eventual tecla pressionada nesse ponto da execução do código.
-    char key_pressed = keypad.getKey();
-
-    if(!in_simulation){
-        if(((key_pressed != NO_KEY) && (key_pressed == '#')) || (change_choosen_vertices_number )){
-            if((!vertices_number_per_player_has_choosen) || (change_choosen_vertices_number )){
-                // Obtem do usuário o número de vértices que cada jogador poderá escolher.
-                setChoosenVerticesNumber();
-            }
-            //
-            if(!change_choosen_vertices_number){ 
-                // Pede para cada jogador escolher 'choices_number' vértices e, após isso, colore esses vértices com a cor que representa cada
-                // um dos jogadores.
-                setColorVertices();
-            }
-        }
-    }else{
-        delay(200);
-        simulate();
-        FastLED.show();
-    }
-}
+// Variável global que guardará o número de vértices que o player 2 (COLOR_2) conquistou.
+int player_2_current_vertex_count = 0;
 
 
 /*        Funções auxiliares        */
@@ -625,6 +580,8 @@ void simulate(){
         G.nodes[i].current_color = G.nodes[i].next_color;
         //std::cout << "R: " << G.nodes[i].current_color.R << " G: " << G.nodes[i].current_color.G << " B: " << G.nodes[i].current_color.B << std::endl;
     }
+
+    updatePlayersVertexCount();
 }
 
 
@@ -730,6 +687,8 @@ void setChoosenVerticesNumber(){
 }
 
 void setColorVertices(){
+    byte chosen_vertices[2*choices_number];
+    int number_of_chosen_vertices = 0;
     // Limpa a tela do display LCD.
     lcd.clear();
 
@@ -741,8 +700,27 @@ void setColorVertices(){
             // Quando count for um número ímpar, o jogador 1 escolherá um vértice.
 
             // Pede para o jogador 1 escolher um vértice e guarda essa escolha na variável 'player_1_choice'.
+            bool was_choose = false;
             byte player_1_choice = choice('1');
-            
+            for(int i = 0; i < number_of_chosen_vertices; i++){
+                if(chosen_vertices[i] == player_1_choice){
+                    was_choose = true;
+                }
+            }
+            if(was_choose){
+                while(was_choose){
+                    player_1_choice = choice('1');
+                    was_choose = false;
+                    for(int i = 0; i < number_of_chosen_vertices; i++){
+                        if(chosen_vertices[i] == player_1_choice){
+                            was_choose = true;
+                        }
+                    }
+                }
+            }
+
+            chosen_vertices[number_of_chosen_vertices] = player_1_choice;
+            number_of_chosen_vertices ++;
             // Altero a cor do 'player_1_choice'
             G.nodes[player_1_choice].set_current_color(Configs::COLOR_1); 
             // Seto no led referente ao vértice 'player_1_choice' a cor do vértice 'player_1_choice'
@@ -760,9 +738,29 @@ void setColorVertices(){
         }else{
             // Quando count for um número par, o jogador 2 escolheá um vértice.
             
+            bool was_choose = false;
             // Pede para o jogador 2 escolher um vértice e guarda essa escolha na variável 'player_2_choice'.
             byte player_2_choice = choice('2');
-            
+
+            for(int i = 0; i < number_of_chosen_vertices; i++){
+                if(chosen_vertices[i] == player_2_choice){
+                    was_choose = true;
+                }
+            }
+            if(was_choose){
+                while(was_choose){
+                    player_2_choice = choice('2');
+                    was_choose = false;
+                    for(int i = 0; i < number_of_chosen_vertices; i++){
+                        if(chosen_vertices[i] == player_2_choice){
+                            was_choose = true;
+                        }
+                    }
+                }
+            }
+
+            chosen_vertices[number_of_chosen_vertices] = player_2_choice;
+            number_of_chosen_vertices ++;
             // SETAR A COR DO VÉRTICE ESCOLHIDO AQUI! (E EXIBIR ESSA COR NO LED!) [A FAZER ]
             // Altero a cor do 'player_1_choice'
             G.nodes[player_2_choice].set_current_color(Configs::COLOR_2); 
@@ -803,6 +801,9 @@ void setColorVertices(){
     }
     delay(500);
     lcd.clear();
+
+    updatePlayersVertexCount();
+
     // Seta a variável 'in_simulation' como true, indicando que a simulação irá começar a partir desse ponto do código.
     in_simulation = true;
 }
@@ -874,4 +875,146 @@ byte choice(char player_number){
 
     // Retorna o número do vértice escolhido pelo usuário.
     return pressed_keys.toInt();
+}
+
+// MUDAR O NOME DESSA FUNÇÃO
+void updatePlayersVertexCount(){
+    player_1_current_vertex_count = 0;
+    player_2_current_vertex_count = 0;
+    for(CRGB color : G.nodes_color){
+        if(color == Configs::COLOR_1) player_1_current_vertex_count ++;
+        else if(color == Configs::COLOR_2) player_2_current_vertex_count ++;
+    }
+}
+
+// DECLARAR ESSA FUNÇÃO NA DECLARAÇÃO DE ASSINATURA DE FUNÇÕES
+bool checkConsensus(){
+
+}
+
+/*        Setup da placa        */
+
+void setup() {
+    // Inicia a comunicação serial com uma taxa de transmissão de 9600 bits por segundo.
+    Serial.begin(9600);
+    //Configs iniciais do display
+    lcd.init(); //Inicializa a comunicação com o display já conectado
+    lcd.clear(); //Limpa a tela do display
+    lcd.backlight(); //Aciona a luz de fundo do display
+    lcd.print("Press # to start");
+
+    // Gera o grafo
+    generateGraph();
+
+    // Com base na configuração abaixo, sempre que usarmos 'FastLED.show()' as cores que estiverem em 'G.nodes_color' serão as cores que irão ser exibidas
+    // nos leds. Por conta disso, convencionaremos na hora de implementarmos a simulação que o array 'G.nodes' será o array que guardará o estado antigo dos
+    // leds, enquanto o array 'G.nodes_color' será o array que guardará o estado novo dos leds. Dito isso, É IMPORTANTE RESSALTAR QUE 'G_nodes_color' e 'G.nodes'
+    // são estruturas de dados diferentes, já que, 'G_nodes' é um array de objetos do tipo 'Node', enquanto 'G_nodes_color' é um array de objetos do tipo 'CRGB'.
+    // Contudo, como todo 'G_nodes[i]' possui o atributo color que é do tipo 'CRGB', podemos operar com os dois arrays citados como sendo os vetores de estado.
+    FastLED.addLeds<NEOPIXEL, Configs::LED_PIN>(G.nodes_color, Configs::NODES_NUMBER); // Inicializa a biblioteca FastLED
+    
+   
+    // Exibe o estado inicial do grafo
+    FastLED.show();
+    delay(5000);
+}
+
+void loop() {
+    
+    // Cria uma variável que guardará uma eventual tecla pressionada nesse ponto da execução do código.
+    char key_pressed = keypad.getKey();
+
+    if(!in_simulation){
+        if(((key_pressed != NO_KEY) && (key_pressed == '#')) || (change_choosen_vertices_number )){
+            if((!vertices_number_per_player_has_choosen) || (change_choosen_vertices_number )){
+                // Obtem do usuário o número de vértices que cada jogador poderá escolher.
+                setChoosenVerticesNumber();
+            }
+            //
+            if(!change_choosen_vertices_number){ 
+                // Pede para cada jogador escolher 'choices_number' vértices e, após isso, colore esses vértices com a cor que representa cada
+                // um dos jogadores.
+                setColorVertices();
+            }
+        }else if((key_pressed != NO_KEY) && (key_pressed == '*')){
+            // Exibe a mensagem 'Choices number:'.
+            col_cursor_current_position = 0;
+            row_cursor_current_position = 0;
+            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+            lcd.print("Enter the value ");
+            col_cursor_current_position = 0;
+            row_cursor_current_position = 1;
+            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+            lcd.print("of p: ");
+        }
+    }else{
+        if(player_1_current_vertex_count == 100){
+            delay(1000);
+            col_cursor_current_position = 0;
+            row_cursor_current_position = 0;
+            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+            lcd.print("The winner is");
+            row_cursor_current_position = 1;
+            col_cursor_current_position = 0;
+            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+            lcd.print("player 1!");
+            delay(2000);
+            lcd.clear();
+            col_cursor_current_position = 0;
+            row_cursor_current_position = 0;
+            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+            lcd.print("Press # to restart");
+            char key = keypad.getKey();
+            while(key != '#'){
+                key = keypad.getKey();
+                delay(50);
+                Serial.println(key);
+            }
+            for(int i = 0; i < Configs::NODES_NUMBER; i++){
+                G.nodes[i].current_color = Configs::OFF;
+                G.nodes[i].next_color = Configs::OFF;
+                G.nodes_color[i] = Configs::OFF;
+            }
+            updatePlayersVertexCount();
+            FastLED.show();
+            in_simulation = false;
+            change_choosen_vertices_number = true;
+        }else if(player_2_current_vertex_count == 100){
+            delay(1000);
+            col_cursor_current_position = 0;
+            row_cursor_current_position = 0;
+            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+            lcd.print("The winner is");
+            row_cursor_current_position = 1;
+            col_cursor_current_position = 0;
+            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+            lcd.print("player 2!");
+            delay(2000);
+            lcd.clear();
+            col_cursor_current_position = 0;
+            row_cursor_current_position = 0;
+            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+            lcd.print("Press # to restart");
+            char key = keypad.getKey();
+            while(key != '#'){
+                key = keypad.getKey();
+            }
+            for(int i = 0; i < Configs::NODES_NUMBER; i++){
+                G.nodes[i].current_color = Configs::OFF;
+                G.nodes[i].next_color = Configs::OFF;
+                G.nodes_color[i] = Configs::OFF;
+            }
+            updatePlayersVertexCount();
+            FastLED.show();
+            in_simulation = false;
+            change_choosen_vertices_number = true;
+        }else{
+            delay(200);
+            simulate();
+            Serial.println(player_1_current_vertex_count);
+            Serial.println(player_2_current_vertex_count);
+            FastLED.show();
+        }
+        
+    }
 }
