@@ -54,13 +54,11 @@ struct Configs{
     static const uint8_t ROWS;
     // Constante responsável por setar o número de colunas do teclado matricial.
     static const uint8_t COLS;
-    // Constante responsável por setar a probabilidade de um led não mudar a sua cor em uma dada iteração da simulação do algoritmo de consenso.
-    // OBS: Usaremos a escala de 0 a 100 para evitar de usar a comparação entre números do tipo 'float' ou 'double'. Ou seja,
-    // SAME_COLOR_CHANCE = 55 representa uma probabilidade de 55% de um led não mudar a sua cor em uma dada iteração da simulação, por exemplo.
-    static const int SAME_COLOR_CHANCE;
     // Constante responsável por setar a quantidade máxima de vértices que cada jogador poderá escolher.
     static const int NUMBER_OF_VERTICES_TO_CHOOSE;
 };
+
+
 
 
 /*              Constantes que serão utilizadas no código               */
@@ -70,7 +68,6 @@ const int Configs::LED_PIN = 12;
 const CRGB Configs::COLOR_1 = CRGB::Green;
 const CRGB Configs::COLOR_2 = CRGB::Purple;
 const CRGB Configs::OFF = CRGB::Black;
-const int Configs::SAME_COLOR_CHANCE = 50;
 const int Configs::NUMBER_OF_VERTICES_TO_CHOOSE = 3;
 const uint8_t Configs::ROWS = 4;
 const uint8_t Configs::COLS = 4;
@@ -349,6 +346,11 @@ int player_1_current_vertex_count = 0;
 // Variável global que guardará o número de vértices que o player 2 (COLOR_2) conquistou.
 int player_2_current_vertex_count = 0;
 
+// Faz sentido essa variável ficar aqui, já que ela não é mais uma constante ?
+// Variável responsável por setar a probabilidade de um led não mudar a sua cor em uma dada iteração da simulação do algoritmo de consenso.
+// OBS: Usaremos a escala de 0 a 100 para evitar de usar a comparação entre números do tipo 'float' ou 'double'. Ou seja,
+// same_color_chance = 55 representa uma probabilidade de 55% de um led não mudar a sua cor em uma dada iteração da simulação, por exemplo.
+int same_color_chance = 20;
 
 /*        Funções auxiliares        */
 void generateGraph(){
@@ -523,22 +525,20 @@ void simulate(){
     std::mt19937 rng(seed);
 
     for(Node& node: G.nodes){
-        //Serial.printf("led_number %d\n", node.led_number);
-        //Serial.printf("=> %d\n", node.led_number);
+
         // Cria uma distribuição uniforme que gera números inteiros entre 0 e 100. Tal distribuição será usada para gerar um número 
         // pseudo-aleatórios entre 0 e 100
         std::uniform_int_distribution<int> dist(0, 100);
 
         // Gera um número pseudo-aleatório entre 0 e 100 usando a semente e a distribuição setadas logo acima.
         int random_int = dist(rng);
-        //Serial.printf("random_int: %d\n\n", random_int);
-        // Cria uma variável booleana que representa se a cor do nó em questão deverá ser alterada ou não, com base em SAME_COLOR_CHANCE.
-        bool change_color = random_int >= Configs::SAME_COLOR_CHANCE; 
+
+        // Cria uma variável booleana que representa se a cor do nó em questão deverá ser alterada ou não, com base em same_color_chance.
+        bool change_color = random_int >= same_color_chance; 
 
         if(change_color){
             // Se o fluxo de execução chegar até aqui, a cor do nó em questão deverá ser alterada.
             if(node.neighbors.empty()){
-                //Serial.printf("neighbors: %d\n", node.led_number);
                 // Se o fluxo de execução chegar até aqui, significa que o nó em questão não possui vizinhos. Logo, a sua cor não será alterada.
                 // Faz com que a próxima cor do nó em questão seja igual a sua cor atual.
                 node.set_next_color(node.current_color);
@@ -560,7 +560,6 @@ void simulate(){
                 else node.set_next_color(node.current_color);
             }
         }else{
-            //Serial.printf("change_color: %d\n", node.led_number);
             // Se o fluxo de execução chegar até aqui, o nó em questão permanecerá com a sua cor inalterada.
             // Faz com que a próxima cor do nó em questão seja igual a sua cor atual.
             node.set_next_color(node.current_color);
@@ -582,54 +581,61 @@ void simulate(){
     }
 
     updatePlayersVertexCount();
+    Serial.printf("Same color chance: %d \n", same_color_chance);
 }
 
 
 void setChoosenVerticesNumber(){
-    // Limpo a mensagem inicial, isto é, limpo a mensagem 'Press # to start!'.
-    lcd.clear();
 
-    // Seta a posição atual do cursor do display LCD para a posição (coluna = 0, linha = 0).
-    col_cursor_current_position = 0;
-    row_cursor_current_position = 0;
-    lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+    boolean isChoiceValid = false;
 
-    // Exibe a mensagem 'Choices number:'.
-    lcd.print("Number of starting");
-    col_cursor_current_position = 0;
-    row_cursor_current_position = 1;
-    lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
-    lcd.print("vertices for each");
-    col_cursor_current_position = 0;
-    row_cursor_current_position = 2;
-    lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
-    lcd.print("player: ");
+    while(!isChoiceValid){
+        // Limpo a mensagem inicial, isto é, limpo a mensagem 'Press # to start!'.
+        lcd.clear();
 
-    // Guarda na variável 'inserted_choices_number' uma eventual tecla digitada.
-    char inserted_choices_number = keypad.getKey();
-    // Enquanto uma tecla não for digitada, o código fica em loop.
-    while(inserted_choices_number == NO_KEY || inserted_choices_number == 'A' || inserted_choices_number == 'B' 
-        || inserted_choices_number == 'C' || inserted_choices_number == 'D' || inserted_choices_number == '0' 
-        || inserted_choices_number == '#'|| inserted_choices_number == '*'){
+        // Seta a posição atual do cursor do display LCD para a posição (coluna = 0, linha = 0).
+        col_cursor_current_position = 0;
+        row_cursor_current_position = 0;
+        lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+
+        // Exibe a mensagem 'Choices number:'.
+        lcd.print("Number of starting");
+        col_cursor_current_position = 0;
+        row_cursor_current_position = 1;
+        lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+        lcd.print("vertices for each");
+        col_cursor_current_position = 0;
+        row_cursor_current_position = 2;
+        lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+        lcd.print("player: ");
+
         // Guarda na variável 'inserted_choices_number' uma eventual tecla digitada.
-        // Perceba que, como apenas 1 caractere é guardado, não se pode digitar um número maior do que 9.
-        inserted_choices_number = keypad.getKey();
+        char inserted_choices_number = keypad.getKey();
+        // Enquanto uma tecla não for digitada, o código fica em loop.
+        while(inserted_choices_number == NO_KEY || inserted_choices_number == 'A' || inserted_choices_number == 'B' 
+            || inserted_choices_number == 'C' || inserted_choices_number == 'D' || inserted_choices_number == '0' 
+            || inserted_choices_number == '#'|| inserted_choices_number == '*'){
+            // Guarda na variável 'inserted_choices_number' uma eventual tecla digitada.
+            // Perceba que, como apenas 1 caractere é guardado, não se pode digitar um número maior do que 9.
+            inserted_choices_number = keypad.getKey();
+        }
+        // Atribuo o número de vértices que cada usuário irá escolher à variável 'choices_number'. Repare que é feita uma conversão do
+        // tipo 'char' para o tipo 'int' através da subtração do '0'.
+        choices_number = inserted_choices_number - '0';
+
+        if(choices_number <= Configs::NUMBER_OF_VERTICES_TO_CHOOSE){
+            // Seta a posição atual do cursor do display LCD para a posição (coluna = 0, linha = 1).
+            col_cursor_current_position = 8;
+            row_cursor_current_position = 2;
+            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+            // Exibo abaixo da mensagem 'Choices number:', o valor escolhido para o número de vértices que cada jogador irá selecionar, isto é,
+            // o valor da variável inserted_choices_number.
+            lcd.print(String(inserted_choices_number));
+
+            isChoiceValid = true;
+        }
     }
 
-    // Seta a posição atual do cursor do display LCD para a posição (coluna = 0, linha = 1).
-    col_cursor_current_position = 8;
-    row_cursor_current_position = 2;
-    lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
-    // Exibo abaixo da mensagem 'Choices number:', o valor escolhido para o número de vértices que cada jogador irá selecionar, isto é,
-    // o valor da variável inserted_choices_number.
-    lcd.print(String(inserted_choices_number));
-
-    // Atribuo o número de vértices que cada usuário irá escolher à variável 'choices_number'. Repare que é feita uma conversão do
-    // tipo 'char' para o tipo 'int' através da subtração do '0'.
-    choices_number = inserted_choices_number - '0';
-
-    // CÓDIGO DE TESTE.
-    Serial.println(choices_number);
 
     // Delay de 1 segundo para o usuário conferir o valor que ele digitou.
     delay(1000);
@@ -656,7 +662,7 @@ void setChoosenVerticesNumber(){
 
     // Guarda em uma variável uma eventual tecla digitada pelo usuário.
     char key_pressed = keypad.getKey();
-    Serial.println(key_pressed);
+
     // Enquanto uma tecla não for digitada pelo usuário, o código fica em loop.
     while(key_pressed == NO_KEY || key_pressed == 'A' || key_pressed == 'B' || key_pressed == 'C' || key_pressed == 'D' || isDigit(key_pressed) ){
         // Verifica se uma tecla foi digitada pelo usuário.
@@ -727,9 +733,6 @@ void setColorVertices(){
             G.nodes_color[G.nodes[player_1_choice].led_number] = Configs::COLOR_1; 
             // Exibo na placa a escolha feita pelo usuário
             FastLED.show();
-
-            // CÓDIGO DE TESTE.
-            Serial.println(player_1_choice);
             
             // Delay de 1s.
             delay(1000);
@@ -768,9 +771,6 @@ void setColorVertices(){
             G.nodes_color[G.nodes[player_2_choice].led_number] = Configs::COLOR_2; 
             // Exibo na placa a escolha feita pelo usuário
             FastLED.show();
-
-            // CÓDIGO DE TESTE.
-            Serial.println(player_2_choice);
 
             // Delay de 1s.
             delay(1000);
@@ -837,7 +837,6 @@ byte choice(char player_number){
     while (key_pressed != '#') {
         // Confere se alguma tecla foi pressionada.
         if (key_pressed != NO_KEY) {
-            Serial.println(key_pressed);
             // Se a última tecla pressionada for igual à '*', um backspace será realizado.
             if ((key_pressed == '*') && (pressed_keys.length() > 0)) {
                 // Remove o último caractere adicionado.
@@ -938,6 +937,7 @@ void loop() {
             }
         }else if((key_pressed != NO_KEY) && (key_pressed == '*')){
             // Exibe a mensagem 'Choices number:'.
+
             col_cursor_current_position = 0;
             row_cursor_current_position = 0;
             lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
@@ -946,6 +946,52 @@ void loop() {
             row_cursor_current_position = 1;
             lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
             lcd.print("of p: ");
+
+            //
+            col_cursor_current_position = 6;
+            // Cria uma variável que guardará todas as teclas pressionadas até que se pressione a tecla '#'.
+            String pressed_values;
+            char p_value = keypad.getKey();
+                // Loop para capturar as teclas pressionadas até que o caractere '#' seja pressionado.
+            while (p_value != '#') {
+                // Confere se alguma tecla foi pressionada.
+                if (p_value != NO_KEY) {
+                    // Se a última tecla pressionada for igual à '*', um backspace será realizado.
+                    if ((p_value == '*') && (pressed_values.length() > 0)) {
+                        // Remove o último caractere adicionado.
+                        pressed_values.remove(pressed_values.length() - 1);
+                        // Volta em uma coluna a posição atual do display.
+                        lcd.setCursor(col_cursor_current_position-1, row_cursor_current_position);
+                        // Substitui. no display, o caractere removido por um espaço em branco.
+                        lcd.print(" ");
+                        // Volta em uma coluna a posição atual do display. Isso é feito para que o espaço em branco seja substituido na próxima iteração
+                        // em que a tecla pressionada for diferente de '*'.
+                        col_cursor_current_position -= 1;
+
+                    // Se a última tecla pressionada for diferente de '*', a última tecla pressionada é adicionado a string "pressed_values".
+                    }else {
+                        // pressed_values.length() < 2 é usado pois só podem ser digitados números entre 0 e 99, já que temos 100 vértices no grafo 
+                        // em questão e esses vértices são numerados de 0 a 99.
+                        if(isDigit(p_value) && pressed_values.length() < 2){
+                            // Adiciona a última tecla pressionada a string "pressed_values".
+                            pressed_values += p_value;
+                            Serial.printf("pressed_values: %d\n", pressed_values); 
+                            // Atualiza a posição atual do display com base na quantidade de caracteres em "pressed_values".
+                            lcd.setCursor(col_cursor_current_position, row_cursor_current_position);
+                            // Imprime a string 'pressed_values' no display LCD.
+                            lcd.print(p_value); 
+                            // Avança em uma coluna a posição atual do display.
+                            col_cursor_current_position += 1;
+                        }
+                    }    
+                }
+                // Atualiza a última tecla pressionada.
+                p_value = keypad.getKey();    
+                Serial.printf("intermediary p_value: %d", p_value);
+                delay(1000);     
+            }
+            Serial.printf("pressed_values: %d \n", pressed_values);
+            same_color_chance = pressed_values.toInt();
         }
     }else{
         if(player_1_current_vertex_count == 100){
@@ -968,7 +1014,6 @@ void loop() {
             while(key != '#'){
                 key = keypad.getKey();
                 delay(50);
-                Serial.println(key);
             }
             for(int i = 0; i < Configs::NODES_NUMBER; i++){
                 G.nodes[i].current_color = Configs::OFF;
@@ -1011,10 +1056,7 @@ void loop() {
         }else{
             delay(200);
             simulate();
-            Serial.println(player_1_current_vertex_count);
-            Serial.println(player_2_current_vertex_count);
             FastLED.show();
-        }
-        
+        }   
     }
 }
